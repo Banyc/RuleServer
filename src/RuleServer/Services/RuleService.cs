@@ -119,6 +119,7 @@ namespace RuleServer.Services
 
         private void UpdateSettings(RuleServiceSettings settings)
         {
+            _logger.LogInformation("Updating settings...");
             List<RuleSettingsCompiled> newRuleSet = new();
             foreach (var rule in settings.RuleSet)
             {
@@ -130,6 +131,7 @@ namespace RuleServer.Services
                 _ruleSet = newRuleSet;
             }
             UpdateIndex();
+            _logger.LogInformation("Done updating settings.");
         }
 
         private static RuleSettingsCompiled ParseRule(RuleSettings rule)
