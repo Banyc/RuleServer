@@ -33,8 +33,18 @@ namespace RuleServer.Services
             _settingsMonitor = settingsMonitor;
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
-            // settingsMonitor.OnChange(UpdateSettings);
-            // UpdateSettings(settingsMonitor.CurrentValue);
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            _settingsMonitor.OnChange(UpdateSettings);
+            UpdateSettings(_settingsMonitor.CurrentValue);
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
 
         public void Alert(IDictionary<string, object> symbolTable,
@@ -213,18 +223,6 @@ namespace RuleServer.Services
                 results.UnionWith(rightResult);
             }
             return results;
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            _settingsMonitor.OnChange(UpdateSettings);
-            UpdateSettings(_settingsMonitor.CurrentValue);
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
         }
     }
 }
