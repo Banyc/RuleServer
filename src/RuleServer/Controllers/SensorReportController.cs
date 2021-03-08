@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -29,15 +30,14 @@ namespace RuleServer.Controllers
         }
 
         [HttpPost("Post")]
-        public async Task<IActionResult> PostAsync(IDictionary<string, object> reportModel)
+        public IActionResult Post(IDictionary<string, object> reportModel)
         {
-            // foreach (var element in reportModel)
-            // {
-            //     element.Value.
-            // }
-            // 
+            _logger.LogDebug("Incoming POST.");
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             _ruleService.Alert(reportModel, _ruleService.LogAlert);
-
+            stopwatch.Stop();
+            _logger.LogDebug($"Respond POST. Time span: {stopwatch.Elapsed.TotalSeconds:0.####}s");
             return Ok();
         }
     }

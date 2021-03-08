@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -6,6 +7,7 @@ using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RuleServer.Data;
 using RuleServer.Helpers.ExpressionParser;
@@ -21,11 +23,16 @@ namespace RuleServer.Services
         private Dictionary<TSensorId, List<RuleSettingsCompiled>> _sensorId_ruleSet = new();
         private readonly IOptionsMonitor<RuleServiceSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly ILogger<RuleService<TSensorId>> _logger;
 
-        public RuleService(IOptionsMonitor<RuleServiceSettings> settingsMonitor, IServiceScopeFactory serviceScopeFactory)
+        public RuleService(
+            IOptionsMonitor<RuleServiceSettings> settingsMonitor,
+            IServiceScopeFactory serviceScopeFactory,
+            ILogger<RuleService<TSensorId>> logger)
         {
             _settingsMonitor = settingsMonitor;
             _serviceScopeFactory = serviceScopeFactory;
+            _logger = logger;
             // settingsMonitor.OnChange(UpdateSettings);
             // UpdateSettings(settingsMonitor.CurrentValue);
         }
@@ -72,7 +79,7 @@ namespace RuleServer.Services
                         rule.IncrementHitCount();
                         if (rule.HitCount == 0)
                         {
-                            action(rule, symbolTable);
+                            Task.Run(() => action(rule, symbolTable));
                         }
                     }
                     return;
@@ -82,6 +89,9 @@ namespace RuleServer.Services
 
         public async void LogAlert(RuleSettingsCompiled rule, IDictionary<string, object> request)
         {
+            _logger.LogDebug("Start writing database.");
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             using var scope = _serviceScopeFactory.CreateScope();
             var logDatabase = scope.ServiceProvider.GetService<RuleAlertContext>();
             await logDatabase.RuleAlerts.AddAsync(new()
@@ -93,6 +103,8 @@ namespace RuleServer.Services
                 SensorId = (string)request["sensorId"],
             }).ConfigureAwait(false);
             await logDatabase.SaveChangesAsync().ConfigureAwait(false);
+            stopwatch.Stop();
+            _logger.LogDebug($"Done writing database. Time span: {stopwatch.Elapsed.TotalSeconds:0.####}s");
         }
 
         private void UpdateSettings(RuleServiceSettings settings)
