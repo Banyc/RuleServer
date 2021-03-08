@@ -13,11 +13,6 @@ namespace RuleServer.Controllers
     [Route("[controller]")]
     public class SensorReportController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
         private readonly ILogger<SensorReportController> _logger;
         private readonly RuleService<string> _ruleService;
 
