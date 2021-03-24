@@ -33,11 +33,7 @@ namespace RuleServer.Controllers
         public IActionResult Post(IDictionary<string, object> reportModel)
         {
             _logger.LogDebug("Incoming POST.");
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            _ruleService.Alert(reportModel, _ruleService.LogAlert);
-            stopwatch.Stop();
-            _logger.LogDebug($"Respond POST. Time span: {stopwatch.Elapsed.TotalSeconds:0.####}s");
+            _ruleService.AlertAsync(reportModel, _ruleService.LogAlert);
             return Ok();
         }
     }

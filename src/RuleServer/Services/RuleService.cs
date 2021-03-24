@@ -24,6 +24,7 @@ namespace RuleServer.Services
         private readonly IOptionsMonitor<RuleServiceSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<RuleService<TSensorId>> _logger;
+        private RuleServiceSettings _settings;
 
         public RuleService(
             IOptionsMonitor<RuleServiceSettings> settingsMonitor,
@@ -47,7 +48,7 @@ namespace RuleServer.Services
             return Task.CompletedTask;
         }
 
-        public void Alert(IDictionary<string, object> symbolTable,
+        public async Task AlertAsync(IDictionary<string, object> symbolTable,
             Action<RuleSettingsCompiled, IDictionary<string, object>> action)
         {
             HashSet<RuleSettingsCompiled> visited = new();
@@ -58,15 +59,15 @@ namespace RuleServer.Services
                     return;
                 }
                 var relativeRuleSet = _sensorId_ruleSet[(TSensorId)symbolTable["sensorId"]];
-                Alert(relativeRuleSet, symbolTable, visited, action);
+                await AlertAsync(relativeRuleSet, symbolTable, visited, action).ConfigureAwait(false);
             }
             else
             {
-                Alert(_ruleSet, symbolTable, visited, action);
+                await AlertAsync(_ruleSet, symbolTable, visited, action).ConfigureAwait(false);
             }
         }
 
-        private static void Alert(
+        private static async Task AlertAsync(
             List<RuleSettingsCompiled> ruleSet,
             IDictionary<string, object> symbolTable,
             HashSet<RuleSettingsCompiled> visited,
@@ -84,13 +85,18 @@ namespace RuleServer.Services
                 var booleanValue = (bool)rule.ExpressionTree.GetValue(symbolTable);
                 if (booleanValue)
                 {
+                    Task actionTask = null;
                     lock (rule)
                     {
                         rule.IncrementHitCount();
                         if (rule.HitCount == 0)
                         {
-                            Task.Run(() => action(rule, symbolTable));
+                            actionTask = Task.Run(() => action(rule, symbolTable));
                         }
+                    }
+                    if (actionTask != null)
+                    {
+                        await actionTask.ConfigureAwait(false);
                     }
                     return;
                 }
@@ -119,6 +125,7 @@ namespace RuleServer.Services
 
         private void UpdateSettings(RuleServiceSettings settings)
         {
+            _settings = settings;
             _logger.LogInformation("Updating settings...");
             List<RuleSettingsCompiled> newRuleSet = new();
             foreach (var rule in settings.RuleSet)
