@@ -6,6 +6,7 @@ namespace RuleServer.Entities
     {
         [Key]
         public int WarningId { get; set; }
+        public string ServerName { get; set; }
         public string SensorId { get; set; }
         public string Timestamp { get; set; }
         public string RuleDetail { get; set; }

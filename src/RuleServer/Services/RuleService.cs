@@ -117,6 +117,7 @@ namespace RuleServer.Services
                 RuleName = rule.RuleName,
                 Timestamp = (string)request["timestamp"],
                 SensorId = (string)request["sensorId"],
+                ServerName = _settings.ServerName
             }).ConfigureAwait(false);
             await logDatabase.SaveChangesAsync().ConfigureAwait(false);
             stopwatch.Stop();
