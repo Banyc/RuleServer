@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Microsoft.Extensions.Logging;
+using RuleServer.Helpers;
 using RuleServer.Helpers.ExpressionParser;
 using RuleServer.Models.Expression;
 using RuleServer.Models.RuleService;
@@ -20,6 +22,9 @@ namespace RuleServer.Services
                 var ruleCompiled = ParseRule(rule);
                 newRuleSet.Add(ruleCompiled);
             }
+            // optimize
+            Optimize(newRuleSet);
+            // switch
             lock (this)
             {
                 _ruleSet = newRuleSet;
@@ -75,6 +80,20 @@ namespace RuleServer.Services
             lock (this)
             {
                 _sensorId_ruleSet = sensorId_ruleSet;
+            }
+        }
+
+        private void Optimize(List<RuleSettingsCompiled> ruleSettingsList)
+        {
+            List<ISimpleExpression> expressions =
+                ruleSettingsList.ConvertAll(xxxx => xxxx.ExpressionTree);
+            _duplicatedSubtress =
+                ExpressionTreeOptimizer.RemoveDuplicatedSubtrees(expressions);
+            int i;
+            for (i = 0; i < ruleSettingsList.Count; i++)
+            {
+                RuleSettingsCompiled ruleSettings = ruleSettingsList[i];
+                ruleSettings.ExpressionTree = expressions[i];
             }
         }
 

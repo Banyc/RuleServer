@@ -13,7 +13,7 @@ namespace RuleServer.Helpers
         }
 
         // return duplicated subtrees
-        private static HashSet<ISimpleExpression> RemoveDuplicatedSubtrees(List<ISimpleExpression> roots)
+        public static HashSet<ISimpleExpression> RemoveDuplicatedSubtrees(List<ISimpleExpression> roots)
         {
             HashSet<ISimpleExpression> duplicatedSubtrees;
             Dictionary<ISimpleExpression, ISimpleExpression> replacements;

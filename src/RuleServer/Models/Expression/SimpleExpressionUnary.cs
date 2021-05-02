@@ -15,16 +15,21 @@ namespace RuleServer.Models.Expression
         public SimpleExpressionUnaryOperator Operator { get; set; }
         public object GetValue(IDictionary<string, object> parameterValuePairs)
         {
-            dynamic operandValue = this.Operand.GetValue(parameterValuePairs);
+            return GetValue(parameterValuePairs, null);
+        }
+
+        public object GetValue(IDictionary<string, object> parameterValuePairs, object operandValue)
+        {
+            dynamic operandValueDynamic = operandValue ?? (dynamic)this.Operand.GetValue(parameterValuePairs);
 
             switch (this.Operator)
             {
                 case SimpleExpressionUnaryOperator.Plus:
-                    return +operandValue;
+                    return +operandValueDynamic;
                 case SimpleExpressionUnaryOperator.Minus:
-                    return -operandValue;
+                    return -operandValueDynamic;
                 case SimpleExpressionUnaryOperator.LogicalNot:
-                    return !operandValue;
+                    return !operandValueDynamic;
                 default:
                     break;
             }

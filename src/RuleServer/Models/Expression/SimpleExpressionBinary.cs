@@ -28,37 +28,44 @@ namespace RuleServer.Models.Expression
 
         public object GetValue(IDictionary<string, object> parameterValuePairs)
         {
-            dynamic leftOperandValue = this.LeftOperand.GetValue(parameterValuePairs);
-            dynamic rightOperandValue = this.RightOperand.GetValue(parameterValuePairs);
+            return GetValue(parameterValuePairs, null, null);
+        }
+
+        public object GetValue(IDictionary<string, object> parameterValuePairs,
+                               object leftOperandValue,
+                               object rightOperandValue)
+        {
+            dynamic leftOperandValueDynamic = leftOperandValue ?? (dynamic)this.LeftOperand.GetValue(parameterValuePairs);
+            dynamic rightOperandValueDynamic = rightOperandValue ?? (dynamic)this.RightOperand.GetValue(parameterValuePairs);
 
             switch (this.Operator)
             {
                 case SimpleExpressionBinaryOperator.Add:
-                    return leftOperandValue + rightOperandValue;
+                    return leftOperandValueDynamic + rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.Mul:
-                    return leftOperandValue * rightOperandValue;
+                    return leftOperandValueDynamic * rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.Div:
-                    return leftOperandValue / rightOperandValue;
+                    return leftOperandValueDynamic / rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.Sub:
-                    return leftOperandValue - rightOperandValue;
+                    return leftOperandValueDynamic - rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.GreaterOrEqual:
-                    return leftOperandValue >= rightOperandValue;
+                    return leftOperandValueDynamic >= rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.Greater:
-                    return leftOperandValue > rightOperandValue;
+                    return leftOperandValueDynamic > rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.Equal:
-                    return leftOperandValue == rightOperandValue;
+                    return leftOperandValueDynamic == rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.LessOrEqual:
-                    return leftOperandValue <= rightOperandValue;
+                    return leftOperandValueDynamic <= rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.Less:
-                    return leftOperandValue < rightOperandValue;
+                    return leftOperandValueDynamic < rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.NotEqual:
-                    return leftOperandValue != rightOperandValue;
+                    return leftOperandValueDynamic != rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.And:
-                    return leftOperandValue && rightOperandValue;
+                    return leftOperandValueDynamic && rightOperandValueDynamic;
                 case SimpleExpressionBinaryOperator.Or:
-                    return leftOperandValue || rightOperandValue;
+                    return leftOperandValueDynamic || rightOperandValueDynamic;
                 // case SimpleExpressionBinaryOperator.Xor:
-                //     return leftOperandValue ^ rightOperandValue;
+                //     return leftOperandValueDynamic ^ rightOperandValueDynamic;
                 default:
                     break;
             }

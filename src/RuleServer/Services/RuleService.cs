@@ -3,14 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Antlr4.Runtime;
-using Antlr4.Runtime.Tree;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RuleServer.Data;
-using RuleServer.Helpers.ExpressionParser;
 using RuleServer.Models.Expression;
 using RuleServer.Models.RuleService;
 
@@ -20,6 +17,7 @@ namespace RuleServer.Services
     public partial class RuleService<TSensorId> : IHostedService
     {
         private List<RuleSettingsCompiled> _ruleSet = new();
+        private HashSet<ISimpleExpression> _duplicatedSubtress;
         private Dictionary<TSensorId, List<RuleSettingsCompiled>> _sensorId_ruleSet = new();
         private readonly IOptionsMonitor<RuleServiceSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -59,11 +57,11 @@ namespace RuleServer.Services
                     return;
                 }
                 var relativeRuleSet = _sensorId_ruleSet[(TSensorId)symbolTable["sensorId"]];
-                await AlertAsync(relativeRuleSet, symbolTable, visited, action).ConfigureAwait(false);
+                await AlertAsync(relativeRuleSet, symbolTable, visited, action, _duplicatedSubtress).ConfigureAwait(false);
             }
             else
             {
-                await AlertAsync(_ruleSet, symbolTable, visited, action).ConfigureAwait(false);
+                await AlertAsync(_ruleSet, symbolTable, visited, action, _duplicatedSubtress).ConfigureAwait(false);
             }
         }
 
@@ -71,8 +69,10 @@ namespace RuleServer.Services
             List<RuleSettingsCompiled> ruleSet,
             IDictionary<string, object> symbolTable,
             HashSet<RuleSettingsCompiled> visited,
-            Action<RuleSettingsCompiled, IDictionary<string, object>> action)
+            Action<RuleSettingsCompiled, IDictionary<string, object>> action,
+            HashSet<ISimpleExpression> duplicatedSubtrees)
         {
+            Dictionary<ISimpleExpression, object> computedValues = new();
             foreach (var rule in ruleSet)
             {
                 // prevent multiple visits
@@ -82,7 +82,21 @@ namespace RuleServer.Services
                 }
                 visited.Add(rule);
                 // check if condition for alert hits
-                var booleanValue = (bool)rule.ExpressionTree.GetValue(symbolTable);
+
+                bool booleanValue;
+                if (duplicatedSubtrees == null)
+                {
+                    // expression not optimized
+                    booleanValue = (bool)rule.ExpressionTree.GetValue(symbolTable);
+                }
+                else
+                {
+                    // expression optimized
+                    booleanValue = (bool)GetExpressionValue(rule.ExpressionTree,
+                                                            symbolTable,
+                                                            computedValues,
+                                                            duplicatedSubtrees);
+                }
                 if (booleanValue)
                 {
                     Task actionTask = null;
@@ -91,7 +105,8 @@ namespace RuleServer.Services
                         rule.IncrementHitCount();
                         if (rule.HitCount == 0)
                         {
-                            actionTask = Task.Run(() => action(rule, symbolTable));
+                            var ruleArg = rule;
+                            actionTask = Task.Run(() => action(ruleArg, symbolTable));
                         }
                     }
                     if (actionTask != null)
@@ -100,6 +115,52 @@ namespace RuleServer.Services
                     }
                     return;
                 }
+            }
+        }
+
+        private static object GetExpressionValue(
+            ISimpleExpression expressionTree,
+            IDictionary<string, object> symbolTable,
+            IDictionary<ISimpleExpression, object> computedValues,
+            HashSet<ISimpleExpression> duplicatedSubtrees)
+        {
+            if (computedValues.ContainsKey(expressionTree))
+            {
+                return computedValues[expressionTree];
+            }
+            if (expressionTree is SimpleExpressionBinary ||
+                expressionTree is SimpleExpressionUnary)
+            {
+                object value = null;
+                if (expressionTree is SimpleExpressionBinary binary)
+                {
+                    object leftValue = GetExpressionValue(binary.LeftOperand,
+                                                          symbolTable,
+                                                          computedValues,
+                                                          duplicatedSubtrees);
+                    object rightValue = GetExpressionValue(binary.RightOperand,
+                                                           symbolTable,
+                                                           computedValues,
+                                                           duplicatedSubtrees);
+                    value = binary.GetValue(symbolTable, leftValue, rightValue);
+                }
+                else if (expressionTree is SimpleExpressionUnary unary)
+                {
+                    object operandValue = GetExpressionValue(unary.Operand,
+                                                             symbolTable,
+                                                             computedValues,
+                                                             duplicatedSubtrees);
+                    value = unary.GetValue(symbolTable, operandValue);
+                }
+                if (duplicatedSubtrees.Contains(expressionTree))
+                {
+                    computedValues[expressionTree] = value;
+                }
+                return value;
+            }
+            else
+            {
+                return expressionTree.GetValue(symbolTable);
             }
         }
 
