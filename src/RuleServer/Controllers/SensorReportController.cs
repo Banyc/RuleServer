@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using RuleServer.Services;
+using RuleServer.Models.RuleService;
 
 namespace RuleServer.Controllers
 {
@@ -34,12 +35,25 @@ namespace RuleServer.Controllers
             return Ok();
         }
 
+        [HttpPost("PostDatabase")]
+        public IActionResult PostDatabase(IDictionary<string, object> reportModel)
+        {
+            _logger.LogDebug("Incoming PostDatabase.");
+            _ruleService.Match(reportModel, this.databaseLogService.LogAlert);
+            return Ok();
+        }
+
         [HttpPost("Post")]
         public IActionResult Post(IDictionary<string, object> reportModel)
         {
             _logger.LogDebug("Incoming POST.");
-            _ruleService.MatchAsync(reportModel, this.databaseLogService.LogAlert);
-            return Ok();
+            List<RuleSettings> matchedRules = new();
+            _ruleService.Match(reportModel,
+                (RuleService<string> sender, MatchedActionArgs args) =>
+                {
+                    matchedRules.Add(args.Rule);
+                });
+            return Ok(new { Matched = matchedRules });
         }
     }
 }

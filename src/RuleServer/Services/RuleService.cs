@@ -47,7 +47,7 @@ namespace RuleServer.Services
             return Task.CompletedTask;
         }
 
-        public async Task MatchAsync(IDictionary<string, object> symbolTable,
+        public void Match(IDictionary<string, object> symbolTable,
             Action<RuleService<TSensorId>, MatchedActionArgs> action)
         {
             HashSet<RuleSettingsCompiled> visited = new();
@@ -58,22 +58,21 @@ namespace RuleServer.Services
                     return;
                 }
                 var relativeRuleSet = _sensorId_ruleSet[(TSensorId)symbolTable["sensorId"]];
-                await MatchAsync(relativeRuleSet, symbolTable, visited, action).ConfigureAwait(false);
+                Match(relativeRuleSet, symbolTable, visited, action);
             }
             else
             {
-                await MatchAsync(_ruleSet, symbolTable, visited, action).ConfigureAwait(false);
+                Match(_ruleSet, symbolTable, visited, action);
             }
         }
 
-        private async Task MatchAsync(
+        private void Match(
             List<RuleSettingsCompiled> ruleSet,
             IDictionary<string, object> symbolTable,
             HashSet<RuleSettingsCompiled> visited,
             Action<RuleService<TSensorId>, MatchedActionArgs> action)
         {
             Dictionary<ISimpleExpression, object> computedValues = new();
-            List<Task> matchedTasks = new();
             foreach (var rule in ruleSet)
             {
                 // prevent multiple visits
@@ -100,7 +99,6 @@ namespace RuleServer.Services
                 }
                 if (booleanValue)
                 {
-                    Task actionTask = null;
                     lock (rule)
                     {
                         rule.IncrementHitCount();
@@ -112,14 +110,12 @@ namespace RuleServer.Services
                                 Rule = rule,
                                 Arguments = symbolTable,
                             };
-                            actionTask = Task.Run(() => action(this, args));
-                            matchedTasks.Add(actionTask);
+                            action(this, args);
                         }
                     }
                     return;
                 }
             }
-            await Task.WhenAll(matchedTasks).ConfigureAwait(false);
         }
 
         private static object GetExpressionValue(
