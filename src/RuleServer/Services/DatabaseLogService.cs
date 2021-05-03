@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,7 @@ namespace RuleServer.Services
             this.logger = logger;
             this.serviceScopeFactory = serviceScopeFactory;
         }
-        public async void LogAlert(RuleService<TSensor> sender, MatchedActionArgs args)
+        public async Task LogAlertAsync(RuleService<TSensor> sender, MatchedActionArgs args)
         {
             this.logger.LogDebug("Start writing database.");
             var stopwatch = new Stopwatch();
@@ -36,6 +37,16 @@ namespace RuleServer.Services
             await logDatabase.SaveChangesAsync().ConfigureAwait(false);
             stopwatch.Stop();
             this.logger.LogDebug($"Done writing database. Time span: {stopwatch.Elapsed.TotalSeconds:0.####}s");
+        }
+        // non-blocking
+        public void LogAlert(RuleService<TSensor> sender, MatchedActionArgs args)
+        {
+            Task.Run(async () => await LogAlertAsync(sender, args).ConfigureAwait(false));
+        }
+        // blocking
+        public async void LogAlertBlocking(RuleService<TSensor> sender, MatchedActionArgs args)
+        {
+            await LogAlertAsync(sender, args).ConfigureAwait(false);
         }
     }
 }
