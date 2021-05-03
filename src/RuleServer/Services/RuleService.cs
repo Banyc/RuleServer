@@ -99,19 +99,23 @@ namespace RuleServer.Services
                 }
                 if (booleanValue)
                 {
+                    bool isReact = false;
                     lock (rule)
                     {
                         rule.IncrementHitCount();
                         if (rule.HitCount == 0)
                         {
-                            var ruleArg = rule;
-                            MatchedActionArgs args = new()
-                            {
-                                Rule = rule,
-                                Arguments = symbolTable,
-                            };
-                            action(this, args);
+                            isReact = true;
                         }
+                    }
+                    if (isReact)
+                    {
+                        MatchedActionArgs args = new()
+                        {
+                            Rule = rule,
+                            Arguments = symbolTable,
+                        };
+                        action(this, args);
                     }
                     return;
                 }
