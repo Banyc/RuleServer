@@ -116,7 +116,6 @@ namespace RuleServer.Services
                         };
                         action(this, args);
                     }
-                    return;
                 }
             }
         }
