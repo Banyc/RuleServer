@@ -8,17 +8,17 @@ using RuleServer.Models.RuleService;
 
 namespace RuleServer.Services
 {
-    public class DatabaseLogService<TSensor>
+    public class DatabaseLogService
     {
-        private readonly ILogger<DatabaseLogService<TSensor>> logger;
+        private readonly ILogger<DatabaseLogService> logger;
         private readonly IServiceScopeFactory serviceScopeFactory;
 
-        public DatabaseLogService(ILogger<DatabaseLogService<TSensor>> logger, IServiceScopeFactory serviceScopeFactory)
+        public DatabaseLogService(ILogger<DatabaseLogService> logger, IServiceScopeFactory serviceScopeFactory)
         {
             this.logger = logger;
             this.serviceScopeFactory = serviceScopeFactory;
         }
-        public async Task LogAlertAsync(RuleService<TSensor> sender, MatchedActionArgs args)
+        public async Task LogAlertAsync(RuleService sender, MatchedActionArgs args)
         {
             this.logger.LogDebug("Start writing database.");
             var stopwatch = new Stopwatch();
@@ -39,12 +39,12 @@ namespace RuleServer.Services
             this.logger.LogDebug($"Done writing database. Time span: {stopwatch.Elapsed.TotalSeconds:0.####}s");
         }
         // non-blocking
-        public void LogAlert(RuleService<TSensor> sender, MatchedActionArgs args)
+        public void LogAlert(RuleService sender, MatchedActionArgs args)
         {
             Task.Run(async () => await LogAlertAsync(sender, args).ConfigureAwait(false));
         }
         // blocking
-        public async void LogAlertBlocking(RuleService<TSensor> sender, MatchedActionArgs args)
+        public async void LogAlertBlocking(RuleService sender, MatchedActionArgs args)
         {
             await LogAlertAsync(sender, args).ConfigureAwait(false);
         }

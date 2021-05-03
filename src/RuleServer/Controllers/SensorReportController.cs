@@ -16,13 +16,13 @@ namespace RuleServer.Controllers
     public class SensorReportController : ControllerBase
     {
         private readonly ILogger<SensorReportController> _logger;
-        private readonly RuleService<string> _ruleService;
-        private readonly DatabaseLogService<string> databaseLogService;
+        private readonly RuleService _ruleService;
+        private readonly DatabaseLogService databaseLogService;
 
         public SensorReportController(
             ILogger<SensorReportController> logger,
-            RuleService<string> ruleService,
-            DatabaseLogService<string> databaseLogService)
+            RuleService ruleService,
+            DatabaseLogService databaseLogService)
         {
             _logger = logger;
             _ruleService = ruleService;
@@ -49,7 +49,7 @@ namespace RuleServer.Controllers
             _logger.LogDebug("Incoming POST.");
             List<RuleSettings> matchedRules = new();
             _ruleService.Match(reportModel,
-                (RuleService<string> sender, MatchedActionArgs args) =>
+                (RuleService sender, MatchedActionArgs args) =>
                 {
                     matchedRules.Add(args.Rule);
                 });

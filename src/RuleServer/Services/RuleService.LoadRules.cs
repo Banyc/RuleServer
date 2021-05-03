@@ -10,7 +10,7 @@ using RuleServer.Models.RuleService;
 
 namespace RuleServer.Services
 {
-    public partial class RuleService<TSensorId>
+    public partial class RuleService
     {
         private void UpdateSettings(RuleServiceSettings settings)
         {
@@ -56,7 +56,7 @@ namespace RuleServer.Services
         // update _sensorId_ruleSet
         private void UpdateIndex()
         {
-            Dictionary<TSensorId, List<RuleSettingsCompiled>> sensorId_ruleSet = new();
+            Dictionary<object, List<RuleSettingsCompiled>> sensorId_ruleSet = new();
 
             foreach (var rule in _ruleSet)
             {
@@ -97,9 +97,9 @@ namespace RuleServer.Services
             }
         }
 
-        private HashSet<TSensorId> GetSensorIds(ISimpleExpression expression)
+        private HashSet<object> GetSensorIds(ISimpleExpression expression)
         {
-            HashSet<TSensorId> results = new();
+            HashSet<object> results = new();
             if (expression is SimpleExpressionConstant ||
                 expression is SimpleExpressionParameter)
             {
@@ -117,7 +117,7 @@ namespace RuleServer.Services
                     leftExpressionParameter.ParameterName == "sensorId" &&
                     expressionBinary.RightOperand is SimpleExpressionConstant rightExpressionConstant)
                 {
-                    results.Add((TSensorId)rightExpressionConstant.Value);
+                    results.Add(rightExpressionConstant.Value);
                     return results;
                 }
                 else if (
@@ -126,7 +126,7 @@ namespace RuleServer.Services
                     rightExpressionParameter.ParameterName == "sensorId" &&
                     expressionBinary.LeftOperand is SimpleExpressionConstant leftExpressionConstant)
                 {
-                    results.Add((TSensorId)leftExpressionConstant.Value);
+                    results.Add(leftExpressionConstant.Value);
                     return results;
                 }
 

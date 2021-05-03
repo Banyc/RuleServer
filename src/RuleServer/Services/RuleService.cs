@@ -14,21 +14,21 @@ using RuleServer.Models.RuleService;
 namespace RuleServer.Services
 {
     // singleton
-    public partial class RuleService<TSensorId> : IHostedService
+    public partial class RuleService : IHostedService
     {
         public string ServerName { get => _settings.ServerName; }
         private List<RuleSettingsCompiled> _ruleSet = new();
         private HashSet<ISimpleExpression> _duplicatedSubtress;
-        private Dictionary<TSensorId, List<RuleSettingsCompiled>> _sensorId_ruleSet = new();
+        private Dictionary<object, List<RuleSettingsCompiled>> _sensorId_ruleSet = new();
         private readonly IOptionsMonitor<RuleServiceSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly ILogger<RuleService<TSensorId>> _logger;
+        private readonly ILogger<RuleService> _logger;
         private RuleServiceSettings _settings;
 
         public RuleService(
             IOptionsMonitor<RuleServiceSettings> settingsMonitor,
             IServiceScopeFactory serviceScopeFactory,
-            ILogger<RuleService<TSensorId>> logger)
+            ILogger<RuleService> logger)
         {
             _settingsMonitor = settingsMonitor;
             _serviceScopeFactory = serviceScopeFactory;
@@ -48,16 +48,16 @@ namespace RuleServer.Services
         }
 
         public void Match(IDictionary<string, object> symbolTable,
-            Action<RuleService<TSensorId>, MatchedActionArgs> action)
+            Action<RuleService, MatchedActionArgs> action)
         {
             HashSet<RuleSettingsCompiled> visited = new();
             if (symbolTable.ContainsKey("sensorId"))
             {
-                if (!_sensorId_ruleSet.ContainsKey((TSensorId)symbolTable["sensorId"]))
+                if (!_sensorId_ruleSet.ContainsKey(symbolTable["sensorId"]))
                 {
                     return;
                 }
-                var relativeRuleSet = _sensorId_ruleSet[(TSensorId)symbolTable["sensorId"]];
+                var relativeRuleSet = _sensorId_ruleSet[symbolTable["sensorId"]];
                 Match(relativeRuleSet, symbolTable, visited, action);
             }
             else
@@ -70,7 +70,7 @@ namespace RuleServer.Services
             List<RuleSettingsCompiled> ruleSet,
             IDictionary<string, object> symbolTable,
             HashSet<RuleSettingsCompiled> visited,
-            Action<RuleService<TSensorId>, MatchedActionArgs> action)
+            Action<RuleService, MatchedActionArgs> action)
         {
             Dictionary<ISimpleExpression, object> computedValues = new();
             foreach (var rule in ruleSet)
