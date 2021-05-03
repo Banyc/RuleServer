@@ -16,6 +16,7 @@ namespace RuleServer.Services
     // singleton
     public partial class RuleService<TSensorId> : IHostedService
     {
+        public string ServerName { get => _settings.ServerName; }
         private List<RuleSettingsCompiled> _ruleSet = new();
         private HashSet<ISimpleExpression> _duplicatedSubtress;
         private Dictionary<TSensorId, List<RuleSettingsCompiled>> _sensorId_ruleSet = new();
@@ -46,8 +47,8 @@ namespace RuleServer.Services
             return Task.CompletedTask;
         }
 
-        public async Task AlertAsync(IDictionary<string, object> symbolTable,
-            Action<RuleSettingsCompiled, IDictionary<string, object>> action)
+        public async Task MatchAsync(IDictionary<string, object> symbolTable,
+            Action<RuleService<TSensorId>, MatchedActionArgs> action)
         {
             HashSet<RuleSettingsCompiled> visited = new();
             if (symbolTable.ContainsKey("sensorId"))
@@ -57,22 +58,22 @@ namespace RuleServer.Services
                     return;
                 }
                 var relativeRuleSet = _sensorId_ruleSet[(TSensorId)symbolTable["sensorId"]];
-                await AlertAsync(relativeRuleSet, symbolTable, visited, action, _duplicatedSubtress).ConfigureAwait(false);
+                await MatchAsync(relativeRuleSet, symbolTable, visited, action).ConfigureAwait(false);
             }
             else
             {
-                await AlertAsync(_ruleSet, symbolTable, visited, action, _duplicatedSubtress).ConfigureAwait(false);
+                await MatchAsync(_ruleSet, symbolTable, visited, action).ConfigureAwait(false);
             }
         }
 
-        private static async Task AlertAsync(
+        private async Task MatchAsync(
             List<RuleSettingsCompiled> ruleSet,
             IDictionary<string, object> symbolTable,
             HashSet<RuleSettingsCompiled> visited,
-            Action<RuleSettingsCompiled, IDictionary<string, object>> action,
-            HashSet<ISimpleExpression> duplicatedSubtrees)
+            Action<RuleService<TSensorId>, MatchedActionArgs> action)
         {
             Dictionary<ISimpleExpression, object> computedValues = new();
+            List<Task> matchedTasks = new();
             foreach (var rule in ruleSet)
             {
                 // prevent multiple visits
@@ -81,10 +82,10 @@ namespace RuleServer.Services
                     continue;
                 }
                 visited.Add(rule);
-                // check if condition for alert hits
+                // check if condition for matching
 
                 bool booleanValue;
-                if (duplicatedSubtrees == null)
+                if (_duplicatedSubtress == null)
                 {
                     // expression not optimized
                     booleanValue = (bool)rule.ExpressionTree.GetValue(symbolTable);
@@ -95,7 +96,7 @@ namespace RuleServer.Services
                     booleanValue = (bool)GetExpressionValue(rule.ExpressionTree,
                                                             symbolTable,
                                                             computedValues,
-                                                            duplicatedSubtrees);
+                                                            _duplicatedSubtress);
                 }
                 if (booleanValue)
                 {
@@ -106,16 +107,19 @@ namespace RuleServer.Services
                         if (rule.HitCount == 0)
                         {
                             var ruleArg = rule;
-                            actionTask = Task.Run(() => action(ruleArg, symbolTable));
+                            MatchedActionArgs args = new()
+                            {
+                                Rule = rule,
+                                Arguments = symbolTable,
+                            };
+                            actionTask = Task.Run(() => action(this, args));
+                            matchedTasks.Add(actionTask);
                         }
-                    }
-                    if (actionTask != null)
-                    {
-                        await actionTask.ConfigureAwait(false);
                     }
                     return;
                 }
             }
+            await Task.WhenAll(matchedTasks).ConfigureAwait(false);
         }
 
         private static object GetExpressionValue(
@@ -162,27 +166,6 @@ namespace RuleServer.Services
             {
                 return expressionTree.GetValue(symbolTable);
             }
-        }
-
-        public async void LogAlert(RuleSettingsCompiled rule, IDictionary<string, object> request)
-        {
-            _logger.LogDebug("Start writing database.");
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            using var scope = _serviceScopeFactory.CreateScope();
-            var logDatabase = scope.ServiceProvider.GetService<RuleAlertContext>();
-            await logDatabase.RuleAlerts.AddAsync(new()
-            {
-                IsActive = true,
-                RuleDetail = rule.ConditionExpression,
-                RuleName = rule.RuleName,
-                Timestamp = (string)request["timestamp"],
-                SensorId = (string)request["sensorId"],
-                ServerName = _settings.ServerName
-            }).ConfigureAwait(false);
-            await logDatabase.SaveChangesAsync().ConfigureAwait(false);
-            stopwatch.Stop();
-            _logger.LogDebug($"Done writing database. Time span: {stopwatch.Elapsed.TotalSeconds:0.####}s");
         }
     }
 }

@@ -16,11 +16,16 @@ namespace RuleServer.Controllers
     {
         private readonly ILogger<SensorReportController> _logger;
         private readonly RuleService<string> _ruleService;
+        private readonly DatabaseLogService<string> databaseLogService;
 
-        public SensorReportController(ILogger<SensorReportController> logger, RuleService<string> ruleService)
+        public SensorReportController(
+            ILogger<SensorReportController> logger,
+            RuleService<string> ruleService,
+            DatabaseLogService<string> databaseLogService)
         {
             _logger = logger;
             _ruleService = ruleService;
+            this.databaseLogService = databaseLogService;
         }
 
         [HttpGet]
@@ -33,7 +38,7 @@ namespace RuleServer.Controllers
         public IActionResult Post(IDictionary<string, object> reportModel)
         {
             _logger.LogDebug("Incoming POST.");
-            _ruleService.AlertAsync(reportModel, _ruleService.LogAlert);
+            _ruleService.MatchAsync(reportModel, this.databaseLogService.LogAlert);
             return Ok();
         }
     }

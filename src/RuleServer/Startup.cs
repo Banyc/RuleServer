@@ -39,6 +39,7 @@ namespace RuleServer
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "RuleServer", Version = "v1" });
             });
             services.AddSingleton<RuleService<string>>();
+            services.AddSingleton<DatabaseLogService<string>>();
             services.AddHostedService<RuleService<string>>(provider => provider.GetService<RuleService<string>>());
             services.AddDbContext<RuleAlertContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("RuleAlertDatabase"))
