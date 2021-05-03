@@ -50,7 +50,6 @@ namespace RuleServer.Services
         public void Match(IDictionary<string, object> symbolTable,
             Action<RuleService, MatchedActionArgs> action)
         {
-            HashSet<RuleSettingsCompiled> visited = new();
             if (symbolTable.ContainsKey("sensorId"))
             {
                 if (!_sensorId_ruleSet.ContainsKey(symbolTable["sensorId"]))
@@ -58,20 +57,20 @@ namespace RuleServer.Services
                     return;
                 }
                 var relativeRuleSet = _sensorId_ruleSet[symbolTable["sensorId"]];
-                Match(relativeRuleSet, symbolTable, visited, action);
+                Match(relativeRuleSet, symbolTable, action);
             }
             else
             {
-                Match(_ruleSet, symbolTable, visited, action);
+                Match(_ruleSet, symbolTable, action);
             }
         }
 
         private void Match(
             List<RuleSettingsCompiled> ruleSet,
             IDictionary<string, object> symbolTable,
-            HashSet<RuleSettingsCompiled> visited,
             Action<RuleService, MatchedActionArgs> action)
         {
+            HashSet<RuleSettingsCompiled> visited = new();
             Dictionary<ISimpleExpression, object> computedValues = new();
             foreach (var rule in ruleSet)
             {

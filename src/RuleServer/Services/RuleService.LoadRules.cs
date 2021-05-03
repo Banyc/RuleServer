@@ -97,6 +97,7 @@ namespace RuleServer.Services
             }
         }
 
+        // find any `sensorId == xxx` in expression
         private HashSet<object> GetSensorIds(ISimpleExpression expression)
         {
             HashSet<object> results = new();
