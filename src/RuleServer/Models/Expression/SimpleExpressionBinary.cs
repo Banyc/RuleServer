@@ -36,6 +36,22 @@ namespace RuleServer.Models.Expression
                                object rightOperandValue)
         {
             dynamic leftOperandValueDynamic = leftOperandValue ?? (dynamic)this.LeftOperand.GetValue(parameterValuePairs);
+            switch (this.Operator)
+            {
+                case SimpleExpressionBinaryOperator.And:
+                    if (leftOperandValueDynamic == false)
+                    {
+                        return false;
+                    }
+                    break;
+                case SimpleExpressionBinaryOperator.Or:
+                    if (leftOperandValueDynamic == true)
+                    {
+                        return true;
+                    }
+                    break;
+            }
+
             dynamic rightOperandValueDynamic = rightOperandValue ?? (dynamic)this.RightOperand.GetValue(parameterValuePairs);
 
             switch (this.Operator)
