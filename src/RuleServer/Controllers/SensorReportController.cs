@@ -39,7 +39,7 @@ namespace RuleServer.Controllers
         public IActionResult PostDatabase(IDictionary<string, object> reportModel)
         {
             _logger.LogDebug("Incoming PostDatabase.");
-            _ruleService.Match(reportModel, this.databaseLogService.LogAlert);
+            _ruleService.Match("default", reportModel, this.databaseLogService.LogAlert);
             return Ok();
         }
 
@@ -48,7 +48,7 @@ namespace RuleServer.Controllers
         {
             _logger.LogDebug("Incoming POST.");
             List<RuleSettings> matchedRules = new();
-            _ruleService.Match(reportModel,
+            _ruleService.Match("default", reportModel,
                 (RuleService sender, MatchedActionArgs args) =>
                 {
                     matchedRules.Add(args.Rule);

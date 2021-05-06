@@ -17,9 +17,8 @@ namespace RuleServer.Services
     public partial class RuleService : IHostedService
     {
         public string ServerName { get => _settings.ServerName; }
-        private List<RuleSettingsCompiled> _ruleSet = new();
+        private Dictionary<string, RuleGroupCompiled> _ruleGroups;
         private HashSet<ISimpleExpression> _duplicatedSubtress;
-        private Dictionary<object, List<RuleSettingsCompiled>> _sensorId_ruleSet = new();
         private readonly IOptionsMonitor<RuleServiceSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<RuleService> _logger;
@@ -47,22 +46,10 @@ namespace RuleServer.Services
             return Task.CompletedTask;
         }
 
-        public void Match(IDictionary<string, object> symbolTable,
+        public void Match(string groupName, IDictionary<string, object> symbolTable,
             Action<RuleService, MatchedActionArgs> action)
         {
-            if (symbolTable.ContainsKey("sensorId"))
-            {
-                if (!_sensorId_ruleSet.ContainsKey(symbolTable["sensorId"]))
-                {
-                    return;
-                }
-                var relativeRuleSet = _sensorId_ruleSet[symbolTable["sensorId"]];
-                Match(relativeRuleSet, symbolTable, action);
-            }
-            else
-            {
-                Match(_ruleSet, symbolTable, action);
-            }
+            Match(_ruleGroups[groupName].RuleSet, symbolTable, action);
         }
 
         private void Match(

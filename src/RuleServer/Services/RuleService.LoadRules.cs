@@ -16,20 +16,31 @@ namespace RuleServer.Services
         {
             _settings = settings;
             _logger.LogInformation("Updating settings...");
-            List<RuleSettingsCompiled> newRuleSet = new();
-            foreach (var rule in settings.RuleSet)
+            Dictionary<string, RuleGroupCompiled> newRuleGroups = new();
+            foreach (var group in settings.RuleGroups)
             {
-                var ruleCompiled = ParseRule(rule);
-                newRuleSet.Add(ruleCompiled);
+                List<RuleSettingsCompiled> newRuleSet = new();
+                foreach (var rule in group.RuleSet)
+                {
+                    var ruleCompiled = ParseRule(rule);
+                    newRuleSet.Add(ruleCompiled);
+                }
+                // optimize
+                Optimize(newRuleSet);
+                // add new rules to rule groups
+                newRuleGroups[group.GroupName] = new()
+                {
+                    GroupName = group.GroupName,
+                    RuleSet = newRuleSet,
+                };
             }
-            // optimize
-            Optimize(newRuleSet);
             // switch
             lock (this)
             {
-                _ruleSet = newRuleSet;
+                _ruleGroups = newRuleGroups;
             }
-            UpdateIndex();
+
+            // UpdateIndex();
             _logger.LogInformation("Done updating settings.");
         }
 
@@ -53,34 +64,9 @@ namespace RuleServer.Services
             };
         }
 
-        // update _sensorId_ruleSet
+        // TODO
         private void UpdateIndex()
         {
-            Dictionary<object, List<RuleSettingsCompiled>> sensorId_ruleSet = new();
-
-            foreach (var rule in _ruleSet)
-            {
-                var sensorIds = GetSensorIds(rule.ExpressionTree);
-                foreach (var sensorId in sensorIds)
-                {
-                    if (sensorId_ruleSet.ContainsKey(sensorId))
-                    {
-                        sensorId_ruleSet[sensorId].Add(rule);
-                    }
-                    else
-                    {
-                        sensorId_ruleSet[sensorId] = new()
-                        {
-                            rule
-                        };
-                    }
-                }
-            }
-
-            lock (this)
-            {
-                _sensorId_ruleSet = sensorId_ruleSet;
-            }
         }
 
         private void Optimize(List<RuleSettingsCompiled> ruleSettingsList)

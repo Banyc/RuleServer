@@ -3,7 +3,7 @@ namespace RuleServer.Models.RuleService
 {
     public class RuleServiceSettings
     {
-        public List<RuleSettings> RuleSet { get; set; }
+        public List<RuleGroup> RuleGroups { get; set; }
         public string ServerName { get; set; }
     }
 }
