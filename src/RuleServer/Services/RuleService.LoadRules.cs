@@ -75,10 +75,10 @@ namespace RuleServer.Services
             // build min-terms
             foreach (var rule in ruleGroup.RuleSet)
             {
-                if (rule.ExpressionTree is SimpleExpressionBinary binary)
+                if (rule.ExpressionTree is SimpleExpressionBinary binaryNode)
                 {
-                    SimpleExpressionParataxis root = SimpleExpressionParataxis.Flatten(binary);
-                    rule.MinTerms = root;
+                    SimpleExpressionParataxis root = SimpleExpressionParataxis.GetMinTerms(binaryNode);
+                    rule.MinTerms = root ?? rule.ExpressionTree;
                 }
                 else
                 {
