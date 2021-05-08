@@ -25,48 +25,71 @@ namespace RuleServer.Models.RuleService
                 return cachedIndexedRules;
             }
 
-            HashSet<RuleSettingsCompiled> freshlySearchedRules = null;
-
-            if (this.IndexedParameters != null)
+            IEnumerable<RuleSettingsCompiled> matchedRules = null;
+            if (this.IndexedParameters == null)
             {
+                // user does not define index =>
+                //   go check all rules
+                matchedRules = this.RuleSet;
+            }
+            else
+            {
+                HashSet<RuleSettingsCompiled> freshlySearchedRules = null;
                 foreach (string indexedParameterName in this.IndexedParameters)
                 {
+                    HashSet<RuleSettingsCompiled> tempMatchedRules;
                     if (!symbolTable.ContainsKey(indexedParameterName))
                     {
-                        continue;
-                    }
-                    object indexedArgument = symbolTable[indexedParameterName];
-                    HashSet<RuleSettingsCompiled> matchedRules;
-                    if (this.IndexByParameterName[indexedParameterName]
-                            .IndexByValue.ContainsKey(indexedArgument))
-                    {
-                        matchedRules =
-                            this.IndexByParameterName[indexedParameterName]
-                                .IndexByValue[indexedArgument];
-                    }
-                    else
-                    {
-                        matchedRules =
+                        tempMatchedRules =
                             this.IndexByParameterName[indexedParameterName]
                                 .UncertainRules;
                     }
+                    else
+                    {
+                        object indexedArgument = symbolTable[indexedParameterName];
+                        if (this.IndexByParameterName[indexedParameterName]
+                                .IndexByValue.ContainsKey(indexedArgument))
+                        {
+                            tempMatchedRules =
+                                this.IndexByParameterName[indexedParameterName]
+                                    .IndexByValue[indexedArgument];
+                        }
+                        else
+                        {
+                            tempMatchedRules =
+                                this.IndexByParameterName[indexedParameterName]
+                                    .UncertainRules;
+                        }
+                    }
                     if (freshlySearchedRules == null)
                     {
-                        freshlySearchedRules = matchedRules;
+                        freshlySearchedRules = tempMatchedRules;
                     }
                     else
                     {
-                        freshlySearchedRules.IntersectWith(matchedRules);
+                        freshlySearchedRules.IntersectWith(tempMatchedRules);
                     }
+                }
+                // if freshlySearchedRules is null,
+                //   it is because:
+                //     1. user defines an empty `IndexedParameters`
+                // since `freshlySearchedRules` can also be considered as being initialized as universe,
+                //   when `freshlySearchedRules` is null =>
+                //     `freshlySearchedRules` is still in its initiation state =>
+                //       this method should return universe
+                if (freshlySearchedRules == null)
+                {
+                    matchedRules = this.RuleSet;
+                }
+                else
+                {
+                    matchedRules = freshlySearchedRules;
                 }
             }
 
-            // if no rule can be found, return the whole rule set.
-            IEnumerable<RuleSettingsCompiled> matchedRule =
-                freshlySearchedRules ?? (IEnumerable<RuleSettingsCompiled>)this.RuleSet;
             // cache the matched rules
-            SetRulesToCachedIndex(symbolTable, matchedRule);
-            return matchedRule;
+            SetRulesToCachedIndex(symbolTable, matchedRules);
+            return matchedRules;
         }
 
         public IEnumerable<RuleSettingsCompiled> GetRulesFromCachedIndex(
