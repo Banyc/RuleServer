@@ -69,25 +69,33 @@ namespace RuleServer.Services
                 // DEBUG ONLY: prevent multiple visits
                 if (visited.Contains(rule))
                 {
-                    throw new Exception("the rules should not be duplicated");
+                    throw new Exception("The rules should not be duplicated");
                     continue;
                 }
                 visited.Add(rule);
 
                 // check if condition for matching {
-                bool booleanValue;
-                if (ruleGroup.DuplicatedSubtrees == null)
+                bool booleanValue = false;
+                try
                 {
-                    // expression not optimized
-                    booleanValue = (bool)rule.ExpressionTree.GetValue(symbolTable);
+                    if (ruleGroup.DuplicatedSubtrees == null)
+                    {
+                        // expression not optimized
+                        booleanValue = (bool)rule.ExpressionTree.GetValue(symbolTable);
+                    }
+                    else
+                    {
+                        // expression optimized
+                        booleanValue = (bool)GetExpressionValue(rule.ExpressionTree,
+                                                                symbolTable,
+                                                                computedValues,
+                                                                ruleGroup.DuplicatedSubtrees);
+                    }
                 }
-                else
+                catch (KeyNotFoundException ex)
                 {
-                    // expression optimized
-                    booleanValue = (bool)GetExpressionValue(rule.ExpressionTree,
-                                                            symbolTable,
-                                                            computedValues,
-                                                            ruleGroup.DuplicatedSubtrees);
+                    // symbol table does not contain enough arguments for the expression of this rule.
+                    _logger.LogDebug(ex.Message);
                 }
                 if (booleanValue)
                 {
