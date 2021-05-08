@@ -27,7 +27,20 @@ namespace RuleServer.Models.RuleService
             {
                 return;
             }
+            if (!this.IndexByValue.ContainsKey(value))
+            {
+                this.IndexByValue[value] = new();
+            }
             this.IndexByValue[value].Add(rule);
+        }
+
+        // when in rule searching, user can only search for `IndexByValue` w/o unioning it with `UncertainRules`
+        public void MergeUncertainRulesToIndexByValue()
+        {
+            foreach (var kv in this.IndexByValue)
+            {
+                kv.Value.UnionWith(this.UncertainRules);
+            }
         }
     }
 }

@@ -33,7 +33,7 @@ namespace RuleServer.Services
                     GroupName = group.GroupName,
                     RuleSet = newRuleSet,
                     DuplicatedSubtrees = duplicatedSubtree,
-                    IndexedParameters = new HashSet<string>(group.IndexedParameters),
+                    IndexedParameters = group.IndexedParameters,
                 };
                 // update index
                 UpdateIndex(newGroup);
@@ -164,6 +164,12 @@ namespace RuleServer.Services
         // TODO
         private static void UpdateIndex(RuleGroupCompiled ruleGroup)
         {
+            if (ruleGroup.IndexedParameters == null)
+            {
+                // user does not define which parameter to index.
+                return;
+            }
+
             // build min-terms
             foreach (var rule in ruleGroup.RuleSet)
             {
@@ -212,6 +218,12 @@ namespace RuleServer.Services
                 {
                     UpdateIndexByMinTerm(rule.ExpressionTree, ruleGroup, rule);
                 }
+            }
+
+            // merge uncertain rules to index
+            foreach (var kv in ruleGroup.IndexByParameterName)
+            {
+                kv.Value.MergeUncertainRulesToIndexByValue();
             }
         }
 

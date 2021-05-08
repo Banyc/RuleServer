@@ -58,16 +58,23 @@ namespace RuleServer.Services
         {
             HashSet<RuleSettingsCompiled> visited = new();
             Dictionary<ISimpleExpression, object> computedValues = new();
-            foreach (var rule in ruleGroup.RuleSet)
+
+            // look up index + get rules
+            IEnumerable<RuleSettingsCompiled> rulesToVisit =
+                ruleGroup.GetMatchedRules(symbolTable);
+
+            // visit rules
+            foreach (var rule in rulesToVisit)
             {
-                // prevent multiple visits
+                // DEBUG ONLY: prevent multiple visits
                 if (visited.Contains(rule))
                 {
+                    throw new Exception("the rules should not be duplicated");
                     continue;
                 }
                 visited.Add(rule);
-                // check if condition for matching
 
+                // check if condition for matching {
                 bool booleanValue;
                 if (ruleGroup.DuplicatedSubtrees == null)
                 {
@@ -103,6 +110,7 @@ namespace RuleServer.Services
                         action(this, args);
                     }
                 }
+                // }
             }
         }
 
