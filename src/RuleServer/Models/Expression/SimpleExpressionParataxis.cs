@@ -99,6 +99,10 @@ namespace RuleServer.Models.Expression
                     rightTempChild.AddChild(binaryChild.RightOperand);
                     this.Operands.AddRange(rightTempChild.Operands);
                 }
+                else
+                {
+                    this.Operands.Add(binaryChild);
+                }
             }
             else if (child is SimpleExpressionParataxis parataxisChild)
             {
