@@ -17,7 +17,14 @@ namespace RuleServer.Helpers
             int hashcode = 0;
             foreach (TItem t in obj)
             {
-                hashcode ^= t.GetHashCode();
+                if (t == null)
+                {
+                    hashcode ^= 0;
+                }
+                else
+                {
+                    hashcode ^= t.GetHashCode();
+                }
             }
             return hashcode;
         }
