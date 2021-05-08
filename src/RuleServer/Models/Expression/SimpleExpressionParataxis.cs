@@ -186,6 +186,8 @@ namespace RuleServer.Models.Expression
                         rightParataxis?.Operator == SimpleExpressionBinaryOperator.Or &&
                         leftParataxis == null))
                 {
+                    newRoot.Operator = SimpleExpressionBinaryOperator.Or;
+
                     SimpleExpressionParataxis childParataxis;
                     ISimpleExpression childNotParataxis;
                     if (rightParataxis != null)
