@@ -18,7 +18,6 @@ namespace RuleServer.Services
     {
         public string ServerName { get => _settings.ServerName; }
         private Dictionary<string, RuleGroupCompiled> _ruleGroups;
-        private HashSet<ISimpleExpression> _duplicatedSubtress;
         private readonly IOptionsMonitor<RuleServiceSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<RuleService> _logger;
@@ -49,17 +48,17 @@ namespace RuleServer.Services
         public void Match(string groupName, IDictionary<string, object> symbolTable,
             Action<RuleService, MatchedActionArgs> action)
         {
-            Match(_ruleGroups[groupName].RuleSet, symbolTable, action);
+            Match(_ruleGroups[groupName], symbolTable, action);
         }
 
         private void Match(
-            List<RuleSettingsCompiled> ruleSet,
+            RuleGroupCompiled ruleGroup,
             IDictionary<string, object> symbolTable,
             Action<RuleService, MatchedActionArgs> action)
         {
             HashSet<RuleSettingsCompiled> visited = new();
             Dictionary<ISimpleExpression, object> computedValues = new();
-            foreach (var rule in ruleSet)
+            foreach (var rule in ruleGroup.RuleSet)
             {
                 // prevent multiple visits
                 if (visited.Contains(rule))
@@ -70,7 +69,7 @@ namespace RuleServer.Services
                 // check if condition for matching
 
                 bool booleanValue;
-                if (_duplicatedSubtress == null)
+                if (ruleGroup.DuplicatedSubtrees == null)
                 {
                     // expression not optimized
                     booleanValue = (bool)rule.ExpressionTree.GetValue(symbolTable);
@@ -81,7 +80,7 @@ namespace RuleServer.Services
                     booleanValue = (bool)GetExpressionValue(rule.ExpressionTree,
                                                             symbolTable,
                                                             computedValues,
-                                                            _duplicatedSubtress);
+                                                            ruleGroup.DuplicatedSubtrees);
                 }
                 if (booleanValue)
                 {

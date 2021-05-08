@@ -26,13 +26,19 @@ namespace RuleServer.Services
                     newRuleSet.Add(ruleCompiled);
                 }
                 // optimize
-                Optimize(newRuleSet);
-                // add new rules to rule groups
-                newRuleGroups[group.GroupName] = new()
+                var duplicatedSubtree = Optimize(newRuleSet);
+                // make new group
+                RuleGroupCompiled newGroup = new()
                 {
                     GroupName = group.GroupName,
                     RuleSet = newRuleSet,
+                    DuplicatedSubtrees = duplicatedSubtree,
+                    IndexedParameters = group.IndexedParameters,
                 };
+                // update index
+                UpdateIndex(newGroup);
+                // add new rules to rule groups
+                newRuleGroups[group.GroupName] = newGroup;
             }
             // switch
             lock (this)
@@ -40,7 +46,6 @@ namespace RuleServer.Services
                 _ruleGroups = newRuleGroups;
             }
 
-            // UpdateIndex();
             _logger.LogInformation("Done updating settings.");
         }
 
@@ -65,15 +70,31 @@ namespace RuleServer.Services
         }
 
         // TODO
-        private void UpdateIndex()
+        private void UpdateIndex(RuleGroupCompiled ruleGroup)
         {
+            // build min-terms
+            foreach (var rule in ruleGroup.RuleSet)
+            {
+                if (rule.ExpressionTree is SimpleExpressionBinary binary)
+                {
+                    SimpleExpressionParataxis root = SimpleExpressionParataxis.Flatten(binary);
+                    rule.MinTerms = root;
+                }
+                else
+                {
+                    rule.MinTerms = rule.ExpressionTree;
+                }
+            }
+
+            // build index in rule group
+            // TODO
         }
 
-        private void Optimize(List<RuleSettingsCompiled> ruleSettingsList)
+        private HashSet<ISimpleExpression> Optimize(List<RuleSettingsCompiled> ruleSettingsList)
         {
             List<ISimpleExpression> expressions =
                 ruleSettingsList.ConvertAll(xxxx => xxxx.ExpressionTree);
-            _duplicatedSubtress =
+            HashSet<ISimpleExpression> duplicatedSubtress =
                 ExpressionTreeOptimizer.RemoveDuplicatedSubtrees(expressions);
             int i;
             for (i = 0; i < ruleSettingsList.Count; i++)
@@ -81,6 +102,7 @@ namespace RuleServer.Services
                 RuleSettingsCompiled ruleSettings = ruleSettingsList[i];
                 ruleSettings.ExpressionTree = expressions[i];
             }
+            return duplicatedSubtress;
         }
 
         // find any `sensorId == xxx` in expression

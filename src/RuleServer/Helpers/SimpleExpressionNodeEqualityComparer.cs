@@ -12,6 +12,11 @@ namespace RuleServer.Helpers
             {
                 return xBinaryNode.Operator == yBinaryNode.Operator;
             }
+            if (x is SimpleExpressionParataxis xParataxis && y is SimpleExpressionParataxis yParataxis)
+            {
+                return xParataxis.Operator == yParataxis.Operator &&
+                    xParataxis.Operands.Count == yParataxis.Operands.Count;
+            }
             if (x is SimpleExpressionConstant xConstantNode && y is SimpleExpressionConstant yConstantNode)
             {
                 if (xConstantNode.Value is string xString && yConstantNode.Value is string yString)
@@ -48,6 +53,11 @@ namespace RuleServer.Helpers
             if (obj is SimpleExpressionBinary binaryNode)
             {
                 return binaryNode.Operator.GetHashCode();
+            }
+            if (obj is SimpleExpressionParataxis parataxisNode)
+            {
+                return parataxisNode.Operator.GetHashCode() +
+                    parataxisNode.Operands.Count.GetHashCode();
             }
             if (obj is SimpleExpressionConstant constantNode)
             {

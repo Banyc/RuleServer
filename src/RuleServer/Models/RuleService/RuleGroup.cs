@@ -6,5 +6,6 @@ namespace RuleServer.Models.RuleService
     {
         public string GroupName { get; set; }
         public List<RuleSettings> RuleSet { get; set; }
+        public List<string> IndexedParameters { get; set; }
     }
 }

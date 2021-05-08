@@ -11,6 +11,7 @@ namespace RuleServer.Models.RuleService
         private int _hitCount = 0;
 
         public ISimpleExpression ExpressionTree { get; set; }
+        public ISimpleExpression MinTerms { get; set; }
         // public event Action<RuleSettingsCompiled> OnAlert;
         public int HitCount
         {
