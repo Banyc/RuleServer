@@ -46,15 +46,17 @@ namespace RuleServer.Services
         }
 
         public void Match(string groupName, IDictionary<string, object> symbolTable,
-            Action<RuleService, MatchedActionArgs> action)
+            Action<RuleService, MatchedActionArgs> matchingAction,
+            Action<RuleService, ExceptionActionArgs> exceptionAction)
         {
-            Match(_ruleGroups[groupName], symbolTable, action);
+            Match(_ruleGroups[groupName], symbolTable, matchingAction, exceptionAction);
         }
 
         private void Match(
             RuleGroupCompiled ruleGroup,
             IDictionary<string, object> symbolTable,
-            Action<RuleService, MatchedActionArgs> action)
+            Action<RuleService, MatchedActionArgs> matchingAction,
+            Action<RuleService, ExceptionActionArgs> exceptionAction)
         {
             HashSet<RuleSettingsCompiled> visited = new();
             Dictionary<ISimpleExpression, object> computedValues = new();
@@ -94,8 +96,20 @@ namespace RuleServer.Services
                 }
                 catch (KeyNotFoundException ex)
                 {
+                    // ISSUE: huge time consuming
                     // symbol table does not contain enough arguments for the expression of this rule.
                     _logger.LogDebug(ex.Message);
+                    ExceptionActionArgs args = new()
+                    {
+                        Group = ruleGroup,
+                        Arguments = symbolTable,
+                        Exception = ex,
+                        Rule = rule,
+                    };
+                    if (exceptionAction != null)
+                    {
+                        exceptionAction(this, args);
+                    }
                 }
                 if (booleanValue)
                 {
@@ -112,10 +126,14 @@ namespace RuleServer.Services
                     {
                         MatchedActionArgs args = new()
                         {
+                            Group = ruleGroup,
                             Rule = rule,
                             Arguments = symbolTable,
                         };
-                        action(this, args);
+                        if (matchingAction != null)
+                        {
+                            matchingAction(this, args);
+                        }
                     }
                 }
                 // }

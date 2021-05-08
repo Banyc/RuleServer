@@ -39,8 +39,13 @@ namespace RuleServer.Controllers
         public IActionResult PostDatabase(IDictionary<string, object> reportModel)
         {
             _logger.LogDebug("Incoming PostDatabase.");
-            _ruleService.Match("default", reportModel, this.databaseLogService.LogAlert);
+            _ruleService.Match("default", reportModel, this.databaseLogService.LogAlert, null);
             return Ok();
+        }
+        struct ExceptionStructure
+        {
+            public RuleSettings Rule { get; set; }
+            public string Exception { get; set; }
         }
 
         [HttpPost("Post")]
@@ -48,12 +53,17 @@ namespace RuleServer.Controllers
         {
             _logger.LogDebug("Incoming POST.");
             List<RuleSettings> matchedRules = new();
+            List<ExceptionStructure> exceptions = new();
             _ruleService.Match("default", reportModel,
                 (RuleService sender, MatchedActionArgs args) =>
                 {
                     matchedRules.Add(args.Rule);
+                },
+                (RuleService sender, ExceptionActionArgs args) =>
+                {
+                    exceptions.Add(new ExceptionStructure { Exception = args.Exception.Message, Rule = args.Rule });
                 });
-            return Ok(new { Matched = matchedRules });
+            return Ok(new { Matched = matchedRules, Exceptions = exceptions });
         }
     }
 }
