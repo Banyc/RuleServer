@@ -33,7 +33,7 @@ namespace RuleServer.Services
                     GroupName = group.GroupName,
                     RuleSet = newRuleSet,
                     DuplicatedSubtrees = duplicatedSubtree,
-                    IndexedParameters = group.IndexedParameters,
+                    IndexedParameters = new HashSet<string>(group.IndexedParameters),
                 };
                 // update index
                 UpdateIndex(newGroup);
@@ -69,8 +69,100 @@ namespace RuleServer.Services
             };
         }
 
+        private static void UpdateIndexByMinTerm(
+            ISimpleExpression minTerm,
+            RuleGroupCompiled ruleGroup,
+            RuleSettingsCompiled rule)
+        {
+            if (minTerm is SimpleExpressionParataxis childUnderOrParataxis &&
+                childUnderOrParataxis.Operator == SimpleExpressionBinaryOperator.And)
+            {
+                // children of `minTerm` are under `and` operator
+                HashSet<string> visitedIndexedParameters = new();
+                foreach (var childUnderAnd in childUnderOrParataxis.Operands)
+                {
+                    string visitedIndexedParameter =
+                        UpdateIndexUnderAnd(childUnderAnd, ruleGroup, rule);
+
+                    if (visitedIndexedParameter != null)
+                    {
+                        visitedIndexedParameters.Add(visitedIndexedParameter);
+                    }
+                }
+                // index this rule if whether to index by a parameter is uncertain
+                UpdateUncertainIndex(visitedIndexedParameters, ruleGroup, rule);
+            }
+            else
+            {
+                // `minTerm` is not `and` node
+                HashSet<string> visitedIndexedParameters = new();
+
+                string visitedIndexedParameter =
+                    UpdateIndexUnderAnd(minTerm, ruleGroup, rule);
+
+                if (visitedIndexedParameter != null)
+                {
+                    visitedIndexedParameters.Add(visitedIndexedParameter);
+                }
+
+                UpdateUncertainIndex(visitedIndexedParameters, ruleGroup, rule);
+            }
+        }
+
+        // return visitedIndexedParameter
+        private static string UpdateIndexUnderAnd(
+            ISimpleExpression childUnderAnd,
+            RuleGroupCompiled ruleGroup,
+            RuleSettingsCompiled rule)
+        {
+            string visitedIndexedParameter = null;
+            if (childUnderAnd is SimpleExpressionBinary thirdLayerBinary &&
+                thirdLayerBinary.Operator == SimpleExpressionBinaryOperator.Equal)
+            {
+                // children are under `==` operator
+                string parameterName = null;
+                object targetValue = null;
+                void SetInfo(ISimpleExpression child)
+                {
+                    if (child is SimpleExpressionParameter parameterNode)
+                    {
+                        parameterName = parameterNode.ParameterName;
+                    }
+                    if (child is SimpleExpressionConstant constantNode)
+                    {
+                        targetValue = constantNode.Value;
+                    }
+                }
+                SetInfo(thirdLayerBinary.LeftOperand);
+                SetInfo(thirdLayerBinary.RightOperand);
+                if (parameterName == null || targetValue == null)
+                {
+                    // `thirdLayerBinary` is not a valid node
+                }
+                else
+                {
+                    // index this rule
+                    visitedIndexedParameter = parameterName;
+                    ruleGroup.IndexByParameterName[parameterName].AddToIndexByValue(targetValue, rule);
+                }
+            }
+            return visitedIndexedParameter;
+        }
+
+        private static void UpdateUncertainIndex(
+            HashSet<string> visitedIndexedParameters,
+            RuleGroupCompiled ruleGroup,
+            RuleSettingsCompiled rule)
+        {
+            var notVisitedParameters = ruleGroup.IndexedParameters.Except(visitedIndexedParameters);
+            foreach (var notVisitedParameter in notVisitedParameters)
+            {
+                ruleGroup.IndexByParameterName[notVisitedParameter].AddToUncertainRules(rule);
+            }
+        }
+
         // TODO
-        private void UpdateIndex(RuleGroupCompiled ruleGroup)
+        private static void UpdateIndex(RuleGroupCompiled ruleGroup)
         {
             // build min-terms
             foreach (var rule in ruleGroup.RuleSet)
@@ -87,7 +179,40 @@ namespace RuleServer.Services
             }
 
             // build index in rule group
-            // TODO
+            // TODO: review
+            foreach (string indexedParameter in ruleGroup.IndexedParameters)
+            {
+                ruleGroup.IndexByParameterName[indexedParameter] = new()
+                {
+                    ParameterName = indexedParameter,
+                };
+            }
+            foreach (var rule in ruleGroup.RuleSet)
+            {
+                if (rule.MinTerms is SimpleExpressionParataxis rootParataxis)
+                {
+                    if (rootParataxis.Operator == SimpleExpressionBinaryOperator.Or)
+                    {
+                        // children are under `or` operator
+                        foreach (var childUnderOr in rootParataxis.Operands)
+                        {
+                            UpdateIndexByMinTerm(childUnderOr, ruleGroup, rule);
+                        }
+                    }
+                    else if (rootParataxis.Operator == SimpleExpressionBinaryOperator.And)
+                    {
+                        UpdateIndexByMinTerm(rootParataxis, ruleGroup, rule);
+                    }
+                    else
+                    {
+                        throw new System.Exception("Not possible to be here");
+                    }
+                }
+                else
+                {
+                    UpdateIndexByMinTerm(rule.ExpressionTree, ruleGroup, rule);
+                }
+            }
         }
 
         private HashSet<ISimpleExpression> Optimize(List<RuleSettingsCompiled> ruleSettingsList)

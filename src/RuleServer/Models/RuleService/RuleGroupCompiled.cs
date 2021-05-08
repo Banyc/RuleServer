@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using RuleServer.Models.Expression;
 
@@ -7,6 +8,7 @@ namespace RuleServer.Models.RuleService
     {
         public HashSet<ISimpleExpression> DuplicatedSubtrees { get; set; }
         public new List<RuleSettingsCompiled> RuleSet { get; set; }
-        public Dictionary<string, RuleIndex> Index { get; set; } = new();
+        public Dictionary<string, RuleIndex> IndexByParameterName { get; set; } = new();
+        public new HashSet<string> IndexedParameters { get; set; }
     }
 }
