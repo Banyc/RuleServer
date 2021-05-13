@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using RuleEngine.Models.RuleService;
+using RuleEngine.Models.RuleEngine;
 
 namespace RuleServer.Services
 {
@@ -15,15 +15,15 @@ namespace RuleServer.Services
     public partial class RuleService : IHostedService
     {
         public string ServerName { get => _ruleService.ServerName; }
-        private readonly IOptionsMonitor<RuleServiceSettings> _settingsMonitor;
+        private readonly IOptionsMonitor<RuleEngineSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<RuleService> _logger;
-        private readonly RuleEngine.RuleService _ruleService;
+        private readonly RuleEngine.RuleEngine _ruleService;
 
         public RuleService(
-            IOptionsMonitor<RuleServiceSettings> settingsMonitor,
+            IOptionsMonitor<RuleEngineSettings> settingsMonitor,
             IServiceScopeFactory serviceScopeFactory,
-            ILogger<RuleEngine.RuleService> engineLogger,
+            ILogger<RuleEngine.RuleEngine> engineLogger,
             ILogger<RuleService> logger
             )
         {
@@ -46,8 +46,8 @@ namespace RuleServer.Services
         }
 
         public void Match(string groupName, IDictionary<string, object> symbolTable,
-            Action<RuleEngine.RuleService, MatchedActionArgs> matchingAction,
-            Action<RuleEngine.RuleService, ExceptionActionArgs> exceptionAction)
+            Action<RuleEngine.RuleEngine, MatchedActionArgs> matchingAction,
+            Action<RuleEngine.RuleEngine, ExceptionActionArgs> exceptionAction)
         {
             _ruleService.Match(groupName, symbolTable, matchingAction, exceptionAction);
         }

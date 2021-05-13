@@ -4,7 +4,7 @@ using System.Linq;
 using RuleEngine.Helpers;
 using RuleEngine.Models.Expression;
 
-namespace RuleEngine.Models.RuleService
+namespace RuleEngine.Models.RuleEngine
 {
     public class RuleGroupCompiled : RuleGroup
     {

@@ -5,21 +5,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RuleEngine.Models.Expression;
-using RuleEngine.Models.RuleService;
+using RuleEngine.Models.RuleEngine;
 
 namespace RuleEngine
 {
     // singleton
-    public partial class RuleService
+    public partial class RuleEngine
     {
         public string ServerName { get => _settings.ServerName; }
         private Dictionary<string, RuleGroupCompiled> _ruleGroups;
-        private readonly ILogger<RuleService> _logger;
-        private RuleServiceSettings _settings;
+        private readonly ILogger<RuleEngine> _logger;
+        private RuleEngineSettings _settings;
 
-        public RuleService(
-            RuleServiceSettings settings,
-            ILogger<RuleService> logger)
+        public RuleEngine(
+            RuleEngineSettings settings,
+            ILogger<RuleEngine> logger)
         {
             _settings = settings;
             _logger = logger;
@@ -29,8 +29,8 @@ namespace RuleEngine
         }
 
         public void Match(string groupName, IDictionary<string, object> symbolTable,
-            Action<RuleService, MatchedActionArgs> matchingAction,
-            Action<RuleService, ExceptionActionArgs> exceptionAction)
+            Action<RuleEngine, MatchedActionArgs> matchingAction,
+            Action<RuleEngine, ExceptionActionArgs> exceptionAction)
         {
             Match(_ruleGroups[groupName], symbolTable, matchingAction, exceptionAction);
         }
@@ -38,8 +38,8 @@ namespace RuleEngine
         private void Match(
             RuleGroupCompiled ruleGroup,
             IDictionary<string, object> symbolTable,
-            Action<RuleService, MatchedActionArgs> matchingAction,
-            Action<RuleService, ExceptionActionArgs> exceptionAction)
+            Action<RuleEngine, MatchedActionArgs> matchingAction,
+            Action<RuleEngine, ExceptionActionArgs> exceptionAction)
         {
 #if DEBUG
             HashSet<RuleSettingsCompiled> visited = new();

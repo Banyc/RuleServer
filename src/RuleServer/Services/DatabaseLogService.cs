@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RuleServer.Data;
-using RuleEngine.Models.RuleService;
+using RuleEngine.Models.RuleEngine;
 
 namespace RuleServer.Services
 {
@@ -18,7 +18,7 @@ namespace RuleServer.Services
             this.logger = logger;
             this.serviceScopeFactory = serviceScopeFactory;
         }
-        public async Task LogAlertAsync(RuleEngine.RuleService sender, MatchedActionArgs args)
+        public async Task LogAlertAsync(RuleEngine.RuleEngine sender, MatchedActionArgs args)
         {
             this.logger.LogDebug("Start writing database.");
             var stopwatch = new Stopwatch();
@@ -39,12 +39,12 @@ namespace RuleServer.Services
             this.logger.LogDebug($"Done writing database. Time span: {stopwatch.Elapsed.TotalSeconds:0.####}s");
         }
         // non-blocking
-        public void LogAlert(RuleEngine.RuleService sender, MatchedActionArgs args)
+        public void LogAlert(RuleEngine.RuleEngine sender, MatchedActionArgs args)
         {
             Task.Run(async () => await LogAlertAsync(sender, args).ConfigureAwait(false));
         }
         // blocking
-        public async void LogAlertBlocking(RuleEngine.RuleService sender, MatchedActionArgs args)
+        public async void LogAlertBlocking(RuleEngine.RuleEngine sender, MatchedActionArgs args)
         {
             await LogAlertAsync(sender, args).ConfigureAwait(false);
         }

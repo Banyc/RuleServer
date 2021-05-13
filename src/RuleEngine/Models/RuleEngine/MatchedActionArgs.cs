@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace RuleEngine.Models.RuleService
+namespace RuleEngine.Models.RuleEngine
 {
     public class MatchedActionArgs
     {

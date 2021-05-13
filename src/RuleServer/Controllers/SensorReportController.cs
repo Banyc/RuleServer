@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using RuleServer.Services;
-using RuleEngine.Models.RuleService;
+using RuleEngine.Models.RuleEngine;
 
 namespace RuleServer.Controllers
 {
@@ -55,11 +55,11 @@ namespace RuleServer.Controllers
             List<RuleSettings> matchedRules = new();
             List<ExceptionStructure> exceptions = new();
             _ruleService.Match("default", reportModel,
-                (RuleEngine.RuleService sender, MatchedActionArgs args) =>
+                (RuleEngine.RuleEngine sender, MatchedActionArgs args) =>
                 {
                     matchedRules.Add(args.Rule);
                 },
-                (RuleEngine.RuleService sender, ExceptionActionArgs args) =>
+                (RuleEngine.RuleEngine sender, ExceptionActionArgs args) =>
                 {
                     exceptions.Add(new ExceptionStructure { Exception = args.Exception.Message, Rule = args.Rule });
                 });

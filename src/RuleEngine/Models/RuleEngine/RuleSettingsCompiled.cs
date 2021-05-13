@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Collections.Generic;
 using RuleEngine.Models.Expression;
 
-namespace RuleEngine.Models.RuleService
+namespace RuleEngine.Models.RuleEngine
 {
     public class RuleSettingsCompiled : RuleSettings
     {

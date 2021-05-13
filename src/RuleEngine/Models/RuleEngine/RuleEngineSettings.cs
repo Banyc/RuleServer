@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-namespace RuleEngine.Models.RuleService
+namespace RuleEngine.Models.RuleEngine
 {
-    public class RuleServiceSettings
+    public class RuleEngineSettings
     {
         public List<RuleGroup> RuleGroups { get; set; }
         public string ServerName { get; set; }

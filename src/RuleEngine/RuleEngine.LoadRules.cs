@@ -6,13 +6,13 @@ using Microsoft.Extensions.Logging;
 using RuleEngine.Helpers;
 using RuleEngine.Helpers.ExpressionParser;
 using RuleEngine.Models.Expression;
-using RuleEngine.Models.RuleService;
+using RuleEngine.Models.RuleEngine;
 
 namespace RuleEngine
 {
-    public partial class RuleService
+    public partial class RuleEngine
     {
-        public void UpdateSettings(RuleServiceSettings settings)
+        public void UpdateSettings(RuleEngineSettings settings)
         {
             _settings = settings;
             _logger.LogInformation("Updating settings...");
@@ -22,11 +22,11 @@ namespace RuleEngine
                 List<RuleSettingsCompiled> newRuleSet = new();
                 foreach (var rule in group.RuleSet)
                 {
-                    var ruleCompiled = RuleServiceLoadRulesStaticHelpers.ParseRule(rule);
+                    var ruleCompiled = RuleEngineLoadRulesStaticHelpers.ParseRule(rule);
                     newRuleSet.Add(ruleCompiled);
                 }
                 // optimize
-                var duplicatedSubtree = RuleServiceLoadRulesStaticHelpers.Optimize(newRuleSet);
+                var duplicatedSubtree = RuleEngineLoadRulesStaticHelpers.Optimize(newRuleSet);
                 // make new group
                 RuleGroupCompiled newGroup = new()
                 {
@@ -36,7 +36,7 @@ namespace RuleEngine
                     IndexedParameters = group.IndexedParameters,
                 };
                 // update index
-                RuleServiceLoadRulesStaticHelpers.UpdateIndex(newGroup);
+                RuleEngineLoadRulesStaticHelpers.UpdateIndex(newGroup);
                 // add new rules to rule groups
                 newRuleGroups[group.GroupName] = newGroup;
             }

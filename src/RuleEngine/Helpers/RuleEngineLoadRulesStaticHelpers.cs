@@ -4,11 +4,11 @@ using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using RuleEngine.Helpers.ExpressionParser;
 using RuleEngine.Models.Expression;
-using RuleEngine.Models.RuleService;
+using RuleEngine.Models.RuleEngine;
 
 namespace RuleEngine.Helpers
 {
-    public static class RuleServiceLoadRulesStaticHelpers
+    public static class RuleEngineLoadRulesStaticHelpers
     {
         public static RuleSettingsCompiled ParseRule(RuleSettings rule)
         {

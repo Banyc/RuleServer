@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using RuleEngine.Models.RuleService;
+using RuleEngine.Models.RuleEngine;
 using RuleServer.Data;
 using RuleServer.Helpers;
 using RuleServer.Services;
@@ -44,7 +44,7 @@ namespace RuleServer
             services.AddDbContext<RuleAlertContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("RuleAlertDatabase"))
             );
-            services.Configure<RuleServiceSettings>(Configuration.GetSection("RuleService"));
+            services.Configure<RuleEngineSettings>(Configuration.GetSection("RuleService"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
