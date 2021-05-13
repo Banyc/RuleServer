@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using RuleServer.Models.Expression;
+using RuleEngine.Models.Expression;
 
-namespace RuleServer.Helpers
+namespace RuleEngine.Helpers
 {
     public class SimpleExpressionSubtreeEqualityComparer : IEqualityComparer<(ISimpleExpression, List<int>)>
     {

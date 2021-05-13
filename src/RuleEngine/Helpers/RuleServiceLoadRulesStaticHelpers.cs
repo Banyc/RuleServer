@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-using RuleServer.Helpers.ExpressionParser;
-using RuleServer.Models.Expression;
-using RuleServer.Models.RuleService;
+using RuleEngine.Helpers.ExpressionParser;
+using RuleEngine.Models.Expression;
+using RuleEngine.Models.RuleService;
 
-namespace RuleServer.Helpers
+namespace RuleEngine.Helpers
 {
     public static class RuleServiceLoadRulesStaticHelpers
     {

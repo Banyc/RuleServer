@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace RuleServer.Models.Expression
+namespace RuleEngine.Models.Expression
 {
     public class SimpleExpressionParataxis : ISimpleExpression
     {

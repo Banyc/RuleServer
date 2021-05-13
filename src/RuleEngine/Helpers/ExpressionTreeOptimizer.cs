@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using RuleServer.Models.Expression;
+using RuleEngine.Models.Expression;
 
-namespace RuleServer.Helpers
+namespace RuleEngine.Helpers
 {
     public static class ExpressionTreeOptimizer
     {

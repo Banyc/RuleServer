@@ -1,7 +1,7 @@
 using Antlr4.Runtime.Misc;
-using RuleServer.Models.Expression;
+using RuleEngine.Models.Expression;
 
-namespace RuleServer.Helpers.ExpressionParser
+namespace RuleEngine.Helpers.ExpressionParser
 {
     public class RuleConditionVisitor : RuleConditionBaseVisitor<object>
     {

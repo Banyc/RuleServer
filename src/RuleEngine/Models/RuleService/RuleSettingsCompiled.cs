@@ -2,9 +2,9 @@ using System.Threading.Tasks;
 using System;
 using System.Linq.Expressions;
 using System.Collections.Generic;
-using RuleServer.Models.Expression;
+using RuleEngine.Models.Expression;
 
-namespace RuleServer.Models.RuleService
+namespace RuleEngine.Models.RuleService
 {
     public class RuleSettingsCompiled : RuleSettings
     {

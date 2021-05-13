@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace RuleServer.Helpers
+namespace RuleEngine.Helpers
 {
     public class ListEqualityComparer<TItem> : IEqualityComparer<List<TItem>>
 

@@ -12,9 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using RuleEngine.Models.RuleService;
 using RuleServer.Data;
 using RuleServer.Helpers;
-using RuleServer.Models.RuleService;
 using RuleServer.Services;
 
 namespace RuleServer

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using RuleServer.Helpers;
-using RuleServer.Models.Expression;
+using RuleEngine.Helpers;
+using RuleEngine.Models.Expression;
 
-namespace RuleServer.Models.RuleService
+namespace RuleEngine.Models.RuleService
 {
     public class RuleGroupCompiled : RuleGroup
     {

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-namespace RuleServer.Models.RuleService
+namespace RuleEngine.Models.RuleService
 {
     public class RuleServiceSettings
     {

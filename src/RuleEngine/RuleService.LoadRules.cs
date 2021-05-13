@@ -3,16 +3,16 @@ using System.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Microsoft.Extensions.Logging;
-using RuleServer.Helpers;
-using RuleServer.Helpers.ExpressionParser;
-using RuleServer.Models.Expression;
-using RuleServer.Models.RuleService;
+using RuleEngine.Helpers;
+using RuleEngine.Helpers.ExpressionParser;
+using RuleEngine.Models.Expression;
+using RuleEngine.Models.RuleService;
 
-namespace RuleServer.Services
+namespace RuleEngine
 {
     public partial class RuleService
     {
-        private void UpdateSettings(RuleServiceSettings settings)
+        public void UpdateSettings(RuleServiceSettings settings)
         {
             _settings = settings;
             _logger.LogInformation("Updating settings...");
