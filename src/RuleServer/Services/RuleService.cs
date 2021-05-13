@@ -14,11 +14,20 @@ namespace RuleServer.Services
     // singleton
     public partial class RuleService : IHostedService
     {
-        public string ServerName { get => _ruleService.ServerName; }
+        public string ServerName { get => _ruleEngine.ServerName; }
         private readonly IOptionsMonitor<RuleEngineSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<RuleService> _logger;
-        private readonly RuleEngine.RuleEngine _ruleService;
+        private readonly RuleEngine.RuleEngine _ruleEngine;
+        private RuleEngineSettings ruleEngineSettings;
+        public RuleEngineSettings RuleEngineSettings
+        {
+            get => ruleEngineSettings; set
+            {
+                this.ruleEngineSettings = value;
+                _ruleEngine.UpdateSettings(value);
+            }
+        }
 
         public RuleService(
             IOptionsMonitor<RuleEngineSettings> settingsMonitor,
@@ -31,8 +40,10 @@ namespace RuleServer.Services
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
 
-            _ruleService = new(_settingsMonitor.CurrentValue, engineLogger);
-            _settingsMonitor.OnChange(_ruleService.UpdateSettings);
+            _ruleEngine = new(_settingsMonitor.CurrentValue, engineLogger);
+            this.ruleEngineSettings = _settingsMonitor.CurrentValue;
+
+            _settingsMonitor.OnChange((settings) => this.RuleEngineSettings = settings);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -49,7 +60,7 @@ namespace RuleServer.Services
             Action<RuleEngine.RuleEngine, MatchedActionArgs> matchingAction,
             Action<RuleEngine.RuleEngine, ExceptionActionArgs> exceptionAction)
         {
-            _ruleService.Match(groupName, symbolTable, matchingAction, exceptionAction);
+            _ruleEngine.Match(groupName, symbolTable, matchingAction, exceptionAction);
         }
     }
 }
