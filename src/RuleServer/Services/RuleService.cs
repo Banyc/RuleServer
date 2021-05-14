@@ -1,3 +1,4 @@
+using System.IO;
 using System.Diagnostics;
 using System;
 using System.Collections.Generic;
@@ -17,8 +18,9 @@ namespace RuleServer.Services
         public string ServerName { get => _ruleEngine.ServerName; }
         private readonly IOptionsMonitor<RuleEngineSettings> _settingsMonitor;
         private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly ILogger<RuleEngine.RuleEngine> _engineLogger;
         private readonly ILogger<RuleService> _logger;
-        private readonly RuleEngine.RuleEngine _ruleEngine;
+        private RuleEngine.RuleEngine _ruleEngine;
         private RuleEngineSettings ruleEngineSettings;
         public RuleEngineSettings RuleEngineSettings
         {
@@ -29,6 +31,8 @@ namespace RuleServer.Services
             }
         }
 
+        private readonly string persistencePath = "appsettings.local.ruleEngine.json";
+
         public RuleService(
             IOptionsMonitor<RuleEngineSettings> settingsMonitor,
             IServiceScopeFactory serviceScopeFactory,
@@ -38,17 +42,33 @@ namespace RuleServer.Services
         {
             _settingsMonitor = settingsMonitor;
             _serviceScopeFactory = serviceScopeFactory;
+            _engineLogger = engineLogger;
             _logger = logger;
-
-            _ruleEngine = new(_settingsMonitor.CurrentValue, engineLogger);
-            this.ruleEngineSettings = _settingsMonitor.CurrentValue;
-
-            _settingsMonitor.OnChange((settings) => this.RuleEngineSettings = settings);
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+            if (File.Exists(this.persistencePath))
+            {
+                // this settings source is considered as up-to-dated one
+                using var fileStream = File.OpenRead(this.persistencePath);
+                this.ruleEngineSettings = await System.Text.Json.JsonSerializer.DeserializeAsync<RuleEngineSettings>(fileStream).ConfigureAwait(false);
+            }
+            else
+            {
+                // this settings source is considered as old one
+                this.ruleEngineSettings = _settingsMonitor.CurrentValue;
+            }
+            _ruleEngine = new(_settingsMonitor.CurrentValue, _engineLogger);
+
+            _settingsMonitor.OnChange((settings) => {
+                // don't load old settings when there are new settings
+                if (!File.Exists(persistencePath))
+                {
+                    this.RuleEngineSettings = settings;
+                }
+            });
+            return;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

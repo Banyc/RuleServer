@@ -1,3 +1,7 @@
+using System.IO;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using RuleEngine.Models.RuleEngine;
@@ -22,9 +26,21 @@ namespace src.RuleServer.Controllers
         }
 
         [HttpPut("UpdateSettings")]
-        public IActionResult UpdateSettings(RuleEngineSettings settings)
+        public async Task<IActionResult> UpdateSettings(RuleEngineSettings settings)
         {
             this.ruleService.RuleEngineSettings = settings;
+            const string persistencePath = "appsettings.local.ruleEngine.json";
+            System.IO.File.Delete(persistencePath);
+            using FileStream jsonFileStream = System.IO.File.OpenWrite(persistencePath);
+            await System.Text.Json.JsonSerializer.SerializeAsync(
+                jsonFileStream,
+                // new { RuleService = settings },
+                value: settings,
+                options: new()
+                {
+                    WriteIndented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                }).ConfigureAwait(false);
             return Ok();
         }
 
