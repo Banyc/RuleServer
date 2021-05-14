@@ -30,6 +30,14 @@
                             OnCancel="@NewGroupModel_OnCancel">
                         <Input @bind-Value="@this.NewGroupName" Placeholder="New group name..."></Input>
                     </Modal>
+                </SpaceItem>
+                <SpaceItem>
+                    @if (this.SelectedGroup != null)
+                    {
+                        <Button OnClick="EditGroupButton_OnClick">Edit Group</Button>
+                    }
+                </SpaceItem>
+                <SpaceItem>
                     @if (this.SelectedGroup != null)
                     {
                         <Button Danger OnClick="DeleteGroupButton_OnClick">Delete Group</Button>
@@ -204,6 +212,7 @@
     private RuleSettings NewRule { get; set; }
     private bool IsNewRuleModelVisible { get; set; }
     private int OldRuleIndex { get; set; } = -1;  // set -1 if adding new rule
+    private bool IsAddingNewGroup { get; set; }
 
 
     protected override async Task OnInitializedAsync()
@@ -219,10 +228,17 @@
 
     private void NewGroupModel_OnOk()
     {
-        this.RuleEngineSettings.RuleGroups.Add(new()
+        if (this.IsAddingNewGroup)
         {
-            GroupName = this.NewGroupName
-        });
+            this.RuleEngineSettings.RuleGroups.Add(new()
+            {
+                GroupName = this.NewGroupName
+            });
+        }
+        else
+        {
+            this.SelectedGroup.GroupName = this.NewGroupName;
+        }
         // not working
         // this.SelectedGroupName = this.NewGroupName;
         StateHasChanged();
@@ -233,8 +249,14 @@
         this.NewGroupName = "";
         this.IsNewGroupModelVisible = false;
     }
+    private void EditGroupButton_OnClick()
+    {
+        this.IsAddingNewGroup = false;
+        this.IsNewGroupModelVisible = true;
+    }
     private void NewGroupButton_OnClick()
     {
+        this.IsAddingNewGroup = true;
         this.IsNewGroupModelVisible = true;
     }
     private void DeleteGroupButton_OnClick()
@@ -250,45 +272,11 @@
 
     private async void FetchRulesButton_OnClick()
     {
-        try
-        {
-            await FetchSettingsAsync();
-
-            await NotificationService.Open(new()
-            {
-                Message = "Fetch Succeeded",
-                Description = "Succeeded"
-            });
-        }
-        catch (Exception ex)
-        {
-            await NotificationService.Error(new()
-            {
-                Message = "Fetch Failed",
-                Description = ex.Message
-            });
-        }
+        await FetchSettingsAsync();
     }
     private async void PushRulesButton_OnClick()
     {
-        try
-        {
-            await PushSettingsAsync();
-
-            await NotificationService.Open(new()
-            {
-                Message = "Push Succeeded",
-                Description = "Succeeded"
-            });
-        }
-        catch (Exception ex)
-        {
-            await NotificationService.Error(new()
-            {
-                Message = "Push Failed",
-                Description = ex.Message
-            });
-        }
+        await PushSettingsAsync();
     }
 
     private void IndexNewTag_OnCheck()
@@ -367,12 +355,55 @@
 
     private async Task FetchSettingsAsync()
     {
-        this.RuleEngineSettings = await this.Backend.GetFromJsonAsync<RuleEngineSettings>("/ManageRules/GetSettings");
-        StateHasChanged();
+        var res = await this.Backend.GetAsync("/ManageRules/GetSettings");
+
+        if (res.IsSuccessStatusCode)
+        {
+            this.RuleEngineSettings = await res.Content.ReadFromJsonAsync<RuleEngineSettings>();
+
+            await NotificationService.Open(new()
+            {
+                Message = "Fetch Succeeded",
+                Description = "Succeeded",
+                NotificationType = NotificationType.Success,
+            });
+            StateHasChanged();
+        }
+        else
+        {
+            await NotificationService.Error(new()
+            {
+                Message = "Fetch Failed",
+                Description = await res.Content.ReadAsStringAsync(),
+                Duration = 0,
+                NotificationType = NotificationType.Error,
+            });
+        }
     }
 
     private async Task PushSettingsAsync()
     {
-        await this.Backend.PutAsJsonAsync("/ManageRules/UpdateSettings", this.RuleEngineSettings);
+        var res = await this.Backend.PutAsJsonAsync("/ManageRules/UpdateSettings", this.RuleEngineSettings);
+
+        if (res.IsSuccessStatusCode)
+        {
+            await NotificationService.Open(new()
+            {
+                Message = "Push Succeeded",
+                Description = "Succeeded",
+                NotificationType = NotificationType.Success,
+            });
+            StateHasChanged();
+        }
+        else
+        {
+            await NotificationService.Error(new()
+            {
+                Message = "Push Failed",
+                Description = await res.Content.ReadAsStringAsync(),
+                Duration = 0,
+                NotificationType = NotificationType.Error,
+            });
+        }
     }
 }
