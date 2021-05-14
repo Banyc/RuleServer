@@ -23,7 +23,7 @@
                     </Select>
                 </SpaceItem>
                 <SpaceItem>
-                    <Button OnClick="NewGroupButton_OnClick">New Group</Button>
+                    <Button OnClick="NewGroupButton_OnClick"><Icon Type="plus" />New Group</Button>
                     <Modal Title="New Group"
                             Visible="@this.IsNewGroupModelVisible"
                             OnOk="@NewGroupModel_OnOk"
@@ -32,12 +32,12 @@
                     </Modal>
                     @if (this.SelectedGroup != null)
                     {
-                        <Button OnClick="DeleteGroupButton_OnClick">Delete Group</Button>
+                        <Button Danger OnClick="DeleteGroupButton_OnClick">Delete Group</Button>
                     }
                 </SpaceItem>
             </Space>
         </Col>
-        <Col Span="4">
+        <Col Span="6">
             <Row Justify="end">
                 <Space>
                     <SpaceItem>
@@ -84,26 +84,28 @@
         <Col Class="gutter-row" Span="2">
             <text>Filter</text>
         </Col>
-        <Col Class="gutter-row" Span="18">
+        <Col Class="gutter-row" Span="16">
             @* search input *@
             <Input Placeholder="Search..." @bind-Value="@this.SearchKeyword" OnPressEnter="SearchInput_OnPressEnter" />
         </Col>
-        <Col Class="gutter-row" Span="3">
-            @if (this.SelectedGroup != null)
-            {
-                <Button OnClick="NewRuleButton_OnClick">New Rule</Button>
-                <Modal Title="New Rule"
-                    Visible="@this.IsNewRuleModelVisible"
-                    OnOk="@NewRuleModel_OnOk"
-                    OnCancel="@NewRuleModel_OnCancel">
-                    @if (this.NewRule != null)
-                    {
-                        <Input @bind-Value="@this.NewRule.RuleName" Placeholder="Rule name..."></Input>
-                        <TextArea @bind-Value="@this.NewRule.Description" Placeholder="Description..." AutoSize="true"></TextArea>
-                        <TextArea @bind-Value="@this.NewRule.ConditionExpression" Placeholder="Condition..." AutoSize="true"></TextArea>
-                    }
-                </Modal>
-            }
+        <Col Class="gutter-row" Span="6">
+            <Row Justify="end">
+                @if (this.SelectedGroup != null)
+                {
+                    <Button OnClick="NewRuleButton_OnClick"><Icon Type="plus" />New Rule</Button>
+                    <Modal Title="New Rule"
+                        Visible="@this.IsNewRuleModelVisible"
+                        OnOk="@NewRuleModel_OnOk"
+                        OnCancel="@NewRuleModel_OnCancel">
+                        @if (this.NewRule != null)
+                        {
+                            <Input @bind-Value="@this.NewRule.RuleName" Placeholder="Rule name..."></Input>
+                            <TextArea @bind-Value="@this.NewRule.Description" Placeholder="Description..." AutoSize="true"></TextArea>
+                            <TextArea @bind-Value="@this.NewRule.ConditionExpression" Placeholder="Condition..." AutoSize="true"></TextArea>
+                        }
+                    </Modal>
+                }
+            </Row>
         </Col>
     </Row>
     <br/>
@@ -124,7 +126,7 @@
                 <Column @bind-Field="@context.RuleName" Fixed="left" Width="150" Sortable />
                 <Column @bind-Field="@context.Description" Width="400" />
                 <Column @bind-Field="@context.ConditionExpression" Width="400" />
-                <ActionColumn Fixed="right">
+                <ActionColumn Fixed="right" Width="150">
                     <Space>
                         <SpaceItem><Button OnClick="()=>EditRule(context)">Edit</Button></SpaceItem>
                         <SpaceItem><Button Danger OnClick="()=>DeleteRule(context)">Delete</Button></SpaceItem>
