@@ -16,10 +16,20 @@
             <Space>
                 <SpaceItem>
                     @* group select *@
-                    <Select DataSource="@this.RuleEngineSettings?.RuleGroups" @bind-Value="@this.SelectedGroupName"
-                        ValueName="@nameof(RuleGroup.GroupName)" LabelName="@nameof(RuleGroup.GroupName)"
-                        Placeholder="Select a group..." OnSelectedItemChanged="GroupSelect_OnSelectedItemChanged"
-                        Style="width: 240px;">
+                    <Select @bind-Value="@this.SelectedGroup"
+                        Placeholder="Select a group..."
+                        Style="width: 240px;"
+                        TItemValue="RuleGroup" 
+                        TItem="RuleGroup">
+                        <SelectOptions>
+                            @if (this.RuleEngineSettings != null && this.RuleEngineSettings.RuleGroups != null)
+                            {
+                                @foreach (var item in this.RuleEngineSettings.RuleGroups)
+                                {
+                                    <SelectOption @key="@item.GroupName" TItemValue="RuleGroup" TItem="RuleGroup" Value=@item Label=@item.GroupName />
+                                }
+                            }
+                        </SelectOptions>
                     </Select>
                 </SpaceItem>
                 <SpaceItem>
@@ -155,17 +165,7 @@
     private RuleEngineSettings RuleEngineSettings { get; set; }
     private HttpClient Backend { get; set; }
     private string SearchKeyword { get; set; }
-    private string SelectedGroupName { get; set; }
-    private RuleGroup SelectedGroup
-    { 
-        get {
-            if (this.RuleEngineSettings == null || this.RuleEngineSettings.RuleGroups == null)
-            {
-                return null;
-            }
-            return this.RuleEngineSettings.RuleGroups.FirstOrDefault(xxxx => xxxx.GroupName == this.SelectedGroupName);
-        }
-    }
+    private RuleGroup SelectedGroup { get; set; }
     private string NewGroupName { get; set; }
     private ITable ruleTable;
     private int RulesCount {
@@ -228,19 +228,22 @@
 
     private void NewGroupModel_OnOk()
     {
+        RuleGroup ruleGroupToSelect = null;
         if (this.IsAddingNewGroup)
         {
-            this.RuleEngineSettings.RuleGroups.Add(new()
+            ruleGroupToSelect = new()
             {
                 GroupName = this.NewGroupName
-            });
+            };
+            this.RuleEngineSettings.RuleGroups.Add(ruleGroupToSelect);
         }
         else
         {
+            ruleGroupToSelect = this.SelectedGroup;
             this.SelectedGroup.GroupName = this.NewGroupName;
         }
-        // not working
-        // this.SelectedGroupName = this.NewGroupName;
+        // assign `this.SelectedGroup` to `ruleGroupToSelect` not working
+        this.SelectedGroup = null;
         StateHasChanged();
         NewGroupModel_OnCancel();
     }
@@ -251,6 +254,7 @@
     }
     private void EditGroupButton_OnClick()
     {
+        this.NewGroupName = this.SelectedGroup.GroupName;
         this.IsAddingNewGroup = false;
         this.IsNewGroupModelVisible = true;
     }
@@ -263,11 +267,6 @@
     {
         this.RuleEngineSettings.RuleGroups.Remove(this.SelectedGroup);
         StateHasChanged();
-    }
-
-    private void GroupSelect_OnSelectedItemChanged(RuleGroup selectedGroup)
-    {
-        // don't have to react
     }
 
     private async void FetchRulesButton_OnClick()
