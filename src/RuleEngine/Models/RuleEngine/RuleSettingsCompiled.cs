@@ -35,6 +35,11 @@ namespace RuleEngine.Models.RuleEngine
         {
             lock (this)
             {
+                if (this.LogThresholdForTimes == 0)
+                {
+                    _hitCount = 0;
+                    return;
+                }
                 // Increment HitCount
                 _hitCount = (_hitCount + 1) % this.LogThresholdForTimes;
             }
