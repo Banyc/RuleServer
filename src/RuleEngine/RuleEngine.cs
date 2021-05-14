@@ -81,7 +81,7 @@ namespace RuleEngine
                                                                 ruleGroup.DuplicatedSubtrees);
                     }
                 }
-                catch (KeyNotFoundException ex)
+                catch (Exception ex)
                 {
                     // ISSUE: huge time consuming
                     // symbol table does not contain enough arguments for the expression of this rule.
