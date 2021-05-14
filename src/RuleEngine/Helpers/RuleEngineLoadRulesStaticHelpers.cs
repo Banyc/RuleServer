@@ -102,9 +102,12 @@ namespace RuleEngine.Helpers
                 }
                 else
                 {
-                    // index this rule
-                    visitedIndexedParameter = parameterName;
-                    ruleGroup.IndexByParameterName[parameterName].AddToIndexByValue(targetValue, rule);
+                    if (ruleGroup.IndexedParameters.Contains(parameterName))
+                    {
+                        // index this rule
+                        visitedIndexedParameter = parameterName;
+                        ruleGroup.IndexByParameterName[parameterName].AddToIndexByValue(targetValue, rule);
+                    }
                 }
             }
             return visitedIndexedParameter;
