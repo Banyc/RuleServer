@@ -6,5 +6,6 @@ namespace RuleEngine.Models.RuleEngine
         public string RuleName { get; set; }
         public string ConditionExpression { get; set; }
         public int LogThresholdForTimes { get; set; }
+        public string Description { get; set; }
     }
 }

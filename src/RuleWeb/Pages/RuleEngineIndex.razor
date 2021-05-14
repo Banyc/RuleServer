@@ -1,0 +1,382 @@
+@page "/"
+@using System.Net.Http.Json
+@using RuleEngine.Models.RuleEngine
+@inject IHttpClientFactory ClientFactory
+@inject NotificationService NotificationService
+
+<h1>Rule Engine</h1>
+
+<div>
+    @* groups *@
+    <Row>
+        <Col Span="2">
+            <text>Group</text>
+        </Col>
+        <Col Span="16">
+            <Space>
+                <SpaceItem>
+                    @* group select *@
+                    <Select DataSource="@this.RuleEngineSettings?.RuleGroups" @bind-Value="@this.SelectedGroupName"
+                        ValueName="@nameof(RuleGroup.GroupName)" LabelName="@nameof(RuleGroup.GroupName)"
+                        Placeholder="Select a group..." OnSelectedItemChanged="GroupSelect_OnSelectedItemChanged"
+                        Style="width: 240px;">
+                    </Select>
+                </SpaceItem>
+                <SpaceItem>
+                    <Button OnClick="NewGroupButton_OnClick">New Group</Button>
+                    <Modal Title="New Group"
+                            Visible="@this.IsNewGroupModelVisible"
+                            OnOk="@NewGroupModel_OnOk"
+                            OnCancel="@NewGroupModel_OnCancel">
+                        <Input @bind-Value="@this.NewGroupName" Placeholder="New group name..."></Input>
+                    </Modal>
+                    @if (this.SelectedGroup != null)
+                    {
+                        <Button OnClick="DeleteGroupButton_OnClick">Delete Group</Button>
+                    }
+                </SpaceItem>
+            </Space>
+        </Col>
+        <Col Span="4">
+            <Row Justify="end">
+                <Space>
+                    <SpaceItem>
+                        <Button OnClick="FetchRulesButton_OnClick">Fetch</Button>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <Button Danger OnClick="PushRulesButton_OnClick">Push</Button>
+                    </SpaceItem>
+                </Space>
+            </Row>
+        </Col>
+
+    </Row>
+    <br/>
+    @* index *@
+    <Row>
+        <Col Span="2">
+            <text>Index</text>
+        </Col>
+        <Col Span="21">
+            @* index tags *@
+            @if (this.SelectedGroup?.IndexedParameters != null)
+            {
+                @foreach (var item in this.SelectedGroup?.IndexedParameters)
+                {
+                    <Tag @key="item" Mode="closeable" OnClose="()=>RemoveIndex(item)">@item</Tag>
+                }
+                @if (this.IsIndexInputVisible)
+                {
+                    <Input Style="width: 78px" Size="small" @bind-Value="this.NewIndexInputValue" OnBlur="IndexInput_OnPressEnter" OnPressEnter="IndexInput_OnPressEnter" AutoFocus/>
+                }
+                else
+                {
+                    <Tag Class="site-tag-plus" OnClick="IndexNewTag_OnCheck">
+                        <Icon Type="plus" />New Index
+                    </Tag>
+                }
+            }
+        </Col>
+    </Row>
+    <br/>
+    @* filter *@
+    <Row Gutter="16">
+        <Col Class="gutter-row" Span="2">
+            <text>Filter</text>
+        </Col>
+        <Col Class="gutter-row" Span="18">
+            @* search input *@
+            <Input Placeholder="Search..." @bind-Value="@this.SearchKeyword" OnPressEnter="SearchInput_OnPressEnter" />
+        </Col>
+        <Col Class="gutter-row" Span="3">
+            @if (this.SelectedGroup != null)
+            {
+                <Button OnClick="NewRuleButton_OnClick">New Rule</Button>
+                <Modal Title="New Rule"
+                    Visible="@this.IsNewRuleModelVisible"
+                    OnOk="@NewRuleModel_OnOk"
+                    OnCancel="@NewRuleModel_OnCancel">
+                    @if (this.NewRule != null)
+                    {
+                        <Input @bind-Value="@this.NewRule.RuleName" Placeholder="Rule name..."></Input>
+                        <TextArea @bind-Value="@this.NewRule.Description" Placeholder="Description..." AutoSize="true"></TextArea>
+                        <TextArea @bind-Value="@this.NewRule.ConditionExpression" Placeholder="Condition..." AutoSize="true"></TextArea>
+                    }
+                </Modal>
+            }
+        </Col>
+    </Row>
+    <br/>
+    @* rule list *@
+    <Row>
+        <Col Span="2">
+            <text>Rules</text>
+        </Col>
+    </Row>
+    <Row>
+        <Col Span="24">
+            <Table @ref="ruleTable"
+                TItem="RuleSettings"
+                DataSource="@this.FilteredRules?.AsEnumerable().Reverse()"
+                Total="@this.RulesCount"
+            >
+                @* <Selection Key="@(context.RuleName)" /> *@
+                <Column @bind-Field="@context.RuleName" Fixed="left" Width="150" Sortable />
+                <Column @bind-Field="@context.Description" Width="400" />
+                <Column @bind-Field="@context.ConditionExpression" Width="400" />
+                <ActionColumn Fixed="right">
+                    <Space>
+                        <SpaceItem><Button OnClick="()=>EditRule(context)">Edit</Button></SpaceItem>
+                        <SpaceItem><Button Danger OnClick="()=>DeleteRule(context)">Delete</Button></SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </Table>
+        </Col>
+    </Row>
+    <br/>
+    <Row>
+        
+    </Row>
+    <br/>
+</div>
+
+@code
+{
+    private RuleEngineSettings RuleEngineSettings { get; set; }
+    private HttpClient Backend { get; set; }
+    private string SearchKeyword { get; set; }
+    private string SelectedGroupName { get; set; }
+    private RuleGroup SelectedGroup
+    { 
+        get {
+            if (this.RuleEngineSettings == null || this.RuleEngineSettings.RuleGroups == null)
+            {
+                return null;
+            }
+            return this.RuleEngineSettings.RuleGroups.FirstOrDefault(xxxx => xxxx.GroupName == this.SelectedGroupName);
+        }
+    }
+    private string NewGroupName { get; set; }
+    private ITable ruleTable;
+    private int RulesCount {
+        get {
+            // if (this.SelectedGroup != null && this.SelectedGroup.RuleSet != null)
+            // {
+            //     return this.SelectedGroup.RuleSet.Count;
+            // }
+            // return 0;
+            if (this.FilteredRules == null)
+            {
+                return 0;
+            }
+            return this.FilteredRules.Count;
+        }
+    }
+    private List<RuleSettings> FilteredRules
+    {
+        get {
+            if (this.SelectedGroup == null || this.SelectedGroup.RuleSet == null)
+            {
+                return null;
+            }
+            if (string.IsNullOrWhiteSpace(this.SearchKeyword))
+            {
+                return this.SelectedGroup.RuleSet;
+            }
+            return this.SelectedGroup.RuleSet.Where(xxxx => (xxxx.RuleName?.Contains(this.SearchKeyword) ?? false) ||
+                                                            (xxxx.Description?.Contains(this.SearchKeyword) ?? false) ||
+                                                            (xxxx.ConditionExpression?.Contains(this.SearchKeyword) ?? false)
+                                                    ).ToList();
+        }
+    }
+
+    // group
+    private bool IsNewGroupModelVisible { get; set; }
+    
+    // index
+
+    private bool IsIndexInputVisible { get; set; }
+    private string NewIndexInputValue { get; set; }
+
+    // rules
+    private RuleSettings NewRule { get; set; }
+    private bool IsNewRuleModelVisible { get; set; }
+    private int OldRuleIndex { get; set; } = -1;  // set -1 if adding new rule
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.Backend = this.ClientFactory.CreateClient("rule server");
+        await FetchSettingsAsync();
+    }
+
+    private async Task SearchInput_OnPressEnter()
+    {
+        // don't have to react
+    }
+
+    private void NewGroupModel_OnOk()
+    {
+        this.RuleEngineSettings.RuleGroups.Add(new()
+        {
+            GroupName = this.NewGroupName
+        });
+        // not working
+        // this.SelectedGroupName = this.NewGroupName;
+        StateHasChanged();
+        NewGroupModel_OnCancel();
+    }
+    private void NewGroupModel_OnCancel()
+    {
+        this.NewGroupName = "";
+        this.IsNewGroupModelVisible = false;
+    }
+    private void NewGroupButton_OnClick()
+    {
+        this.IsNewGroupModelVisible = true;
+    }
+    private void DeleteGroupButton_OnClick()
+    {
+        this.RuleEngineSettings.RuleGroups.Remove(this.SelectedGroup);
+        StateHasChanged();
+    }
+
+    private void GroupSelect_OnSelectedItemChanged(RuleGroup selectedGroup)
+    {
+        // don't have to react
+    }
+
+    private async void FetchRulesButton_OnClick()
+    {
+        try
+        {
+            await FetchSettingsAsync();
+
+            await NotificationService.Open(new()
+            {
+                Message = "Fetch Succeeded",
+                Description = "Succeeded"
+            });
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.Error(new()
+            {
+                Message = "Fetch Failed",
+                Description = ex.Message
+            });
+        }
+    }
+    private async void PushRulesButton_OnClick()
+    {
+        try
+        {
+            await PushSettingsAsync();
+
+            await NotificationService.Open(new()
+            {
+                Message = "Push Succeeded",
+                Description = "Succeeded"
+            });
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.Error(new()
+            {
+                Message = "Push Failed",
+                Description = ex.Message
+            });
+        }
+    }
+
+    private void IndexNewTag_OnCheck()
+    {
+        this.IsIndexInputVisible = true;
+    }
+
+    private void IndexInput_OnPressEnter()
+    {
+        if (string.IsNullOrEmpty(this.NewIndexInputValue))
+        {
+            CancelIndexInput();
+            return;
+        }
+
+        string res = this.SelectedGroup?.IndexedParameters?.Find(s => s == this.NewIndexInputValue);
+
+        if (string.IsNullOrEmpty(res))
+        {
+            this.SelectedGroup.IndexedParameters.Add(this.NewIndexInputValue);
+        }
+
+        CancelIndexInput();
+    }
+
+    private void CancelIndexInput()
+    {
+        this.NewIndexInputValue = "";
+        this.IsIndexInputVisible = false;
+    }
+
+    private void RemoveIndex(string item)
+    {
+        this.SelectedGroup.IndexedParameters.Remove(item);
+    }
+
+    private void NewRuleButton_OnClick()
+    {
+        this.NewRule = new();
+        this.IsNewRuleModelVisible = true;
+    }
+
+    private void NewRuleModel_OnOk()
+    {
+        if (this.OldRuleIndex < 0)
+        {
+            this.SelectedGroup.RuleSet.Add(this.NewRule);
+        }
+        else
+        {
+            this.SelectedGroup.RuleSet.RemoveAt(this.OldRuleIndex);
+            this.SelectedGroup.RuleSet.Insert(this.OldRuleIndex, this.NewRule);
+        }
+        this.OldRuleIndex = -1;
+        StateHasChanged();
+        NewRuleModel_OnCancel();
+    }
+
+    private void NewRuleModel_OnCancel()
+    {
+        this.IsNewRuleModelVisible = false;
+        this.NewRule = null;
+    }
+
+    private void EditRule(RuleSettings rule)
+    {
+        // reuse new rule model
+        this.NewRule = new()
+        {
+            RuleName = rule.RuleName,
+            ConditionExpression = rule.ConditionExpression,
+            Description = rule.Description,
+            LogThresholdForTimes = rule.LogThresholdForTimes,
+        };
+        this.OldRuleIndex = this.SelectedGroup.RuleSet.IndexOf(rule);
+        this.IsNewRuleModelVisible = true;
+    }
+    private void DeleteRule(RuleSettings rule)
+    {
+        this.SelectedGroup.RuleSet.Remove(rule);
+    }
+
+    private async Task FetchSettingsAsync()
+    {
+        this.RuleEngineSettings = await this.Backend.GetFromJsonAsync<RuleEngineSettings>("/ManageRules/GetSettings");
+        StateHasChanged();
+    }
+
+    private async Task PushSettingsAsync()
+    {
+        await this.Backend.PutAsJsonAsync("/ManageRules/UpdateSettings", this.RuleEngineSettings);
+    }
+}
