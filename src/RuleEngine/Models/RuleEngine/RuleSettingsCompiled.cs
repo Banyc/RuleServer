@@ -29,7 +29,11 @@ namespace RuleEngine.Models.RuleEngine
             this.ConditionExpression = ruleSettings.ConditionExpression;
             this.LogThresholdForTimes = ruleSettings.LogThresholdForTimes;
             this.RuleName = ruleSettings.RuleName;
+            this.Description = ruleSettings.Description;
         }
+
+        // hide method from inherited class
+        new private object Clone() { return null; }
 
         public void IncrementHitCount()
         {

@@ -354,13 +354,7 @@
     private void EditRule(RuleSettings rule)
     {
         // reuse new rule model
-        this.NewRule = new()
-        {
-            RuleName = rule.RuleName,
-            ConditionExpression = rule.ConditionExpression,
-            Description = rule.Description,
-            LogThresholdForTimes = rule.LogThresholdForTimes,
-        };
+        this.NewRule = (RuleSettings)rule.Clone();
         this.OldRuleIndex = this.SelectedGroup.RuleSet.IndexOf(rule);
         this.IsNewRuleModelVisible = true;
     }
