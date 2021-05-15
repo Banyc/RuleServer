@@ -16,17 +16,18 @@
             <Space>
                 <SpaceItem>
                     @* group select *@
-                    <Select @bind-Value="@this.SelectedGroup"
+                    <Select @bind-Value="@this.SelectedGroupName"
                         Placeholder="Select a group..."
                         Style="width: 240px;"
-                        TItemValue="RuleGroup" 
-                        TItem="RuleGroup">
+                        TItemValue="string" 
+                        TItem="string">
                         <SelectOptions>
                             @if (this.RuleEngineSettings != null && this.RuleEngineSettings.RuleGroups != null)
                             {
                                 @foreach (var item in this.RuleEngineSettings.RuleGroups)
                                 {
-                                    <SelectOption @key="@item.GroupName" TItemValue="RuleGroup" TItem="RuleGroup" Value=@item Label=@item.GroupName />
+                                    @* `TItem` and `TItemValue` cannot be `RuleGroup` since updating `Select.Value` will not overwrites the old value *@
+                                    <SelectOption @key="item.GroupName" TItemValue="string" TItem="string" Value=@item.GroupName Label=@item.GroupName />
                                 }
                             }
                         </SelectOptions>
@@ -165,7 +166,18 @@
     private RuleEngineSettings RuleEngineSettings { get; set; }
     private HttpClient Backend { get; set; }
     private string SearchKeyword { get; set; }
-    private RuleGroup SelectedGroup { get; set; }
+    private string SelectedGroupName { get; set; }
+    private RuleGroup SelectedGroup
+    { 
+        get
+        {
+            if (this.RuleEngineSettings == null || this.RuleEngineSettings.RuleGroups == null)
+            {
+                return null;
+            }
+            return this.RuleEngineSettings.RuleGroups.FirstOrDefault(xxxx => xxxx.GroupName == this.SelectedGroupName);
+        }
+    }
     private string NewGroupName { get; set; }
     private ITable ruleTable;
     private int RulesCount {
@@ -243,7 +255,7 @@
             this.SelectedGroup.GroupName = this.NewGroupName;
         }
         // assign `this.SelectedGroup` to `ruleGroupToSelect` not working
-        this.SelectedGroup = null;
+        this.SelectedGroupName = null;
         StateHasChanged();
         NewGroupModel_OnCancel();
     }
