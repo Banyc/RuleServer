@@ -12,8 +12,13 @@ namespace RuleEngine.Models.RuleEngine
         public new List<RuleSettingsCompiled> RuleSet { get; set; }
         public Dictionary<string, RuleIndex> IndexByParameterName { get; set; } = new();
         // public new HashSet<string> IndexedParameters { get; set; }
-        public Dictionary<List<object>, IEnumerable<RuleSettingsCompiled>> CachedIndex { get; set; } =
-            new(new ListEqualityComparer<object>());
+        public LruDictionary<List<object>, IEnumerable<RuleSettingsCompiled>> CachedIndex { get; set; }
+        public new int MaxIndexCacheSize { get => base.MaxIndexCacheSize; }
+
+        public RuleGroupCompiled()
+        {
+            this.CachedIndex = new(this.MaxIndexCacheSize, new ListEqualityComparer<object>());
+        }
 
         public IEnumerable<RuleSettingsCompiled> GetMatchedRules(
             IDictionary<string, object> symbolTable)
@@ -25,7 +30,7 @@ namespace RuleEngine.Models.RuleEngine
                 return cachedIndexedRules;
             }
 
-            IEnumerable<RuleSettingsCompiled> matchedRules = null;
+            IEnumerable<RuleSettingsCompiled> matchedRules;
             if (this.IndexedParameters == null)
             {
                 // user does not define index =>
