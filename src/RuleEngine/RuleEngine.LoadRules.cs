@@ -13,7 +13,7 @@ namespace RuleEngine
         public void UpdateSettings(RuleEngineSettings settings)
         {
             _settings = settings;
-            _logger.LogInformation("Updating settings...");
+            _logger?.LogInformation("Updating settings...");
             Dictionary<string, RuleGroupCompiled> newRuleGroups = new();
             foreach (var group in settings.RuleGroups)
             {
@@ -44,7 +44,7 @@ namespace RuleEngine
                 _ruleGroups = newRuleGroups;
             }
 
-            _logger.LogInformation("Done updating settings.");
+            _logger?.LogInformation("Done updating settings.");
         }
     }
 }

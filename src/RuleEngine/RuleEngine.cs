@@ -28,6 +28,15 @@ namespace RuleEngine
             UpdateSettings(settings);
         }
 
+        public RuleEngine(
+            RuleEngineSettings settings)
+        {
+            _settings = settings;
+
+            // compile the rules in the settings
+            UpdateSettings(settings);
+        }
+
         public void Match(string groupName, IDictionary<string, object> symbolTable,
             Action<RuleEngine, MatchedActionArgs> matchingAction,
             Action<RuleEngine, ExceptionActionArgs> exceptionAction)
@@ -85,7 +94,7 @@ namespace RuleEngine
                 {
                     // ISSUE: huge time consuming
                     // symbol table does not contain enough arguments for the expression of this rule.
-                    _logger.LogDebug(ex.Message);
+                    _logger?.LogDebug(ex.Message);
                     ExceptionActionArgs args = new()
                     {
                         Group = ruleGroup,
