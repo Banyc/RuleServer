@@ -25,6 +25,18 @@
             ],
             "problemMatcher": "$msCompile"
         },
+        {
+            "label": "buildBenchmark",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/benchmark/RuleEngine.Benchmark/RuleEngine.Benchmark.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
         // {
         //     "label": "publish",
         //     "command": "dotnet",

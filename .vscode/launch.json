@@ -45,6 +45,26 @@
             }
         },
         {
+            "name": "Benchmark",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "buildBenchmark",
+            "program": "${workspaceFolder}/benchmark/RuleEngine.Benchmark/bin/Debug/net5.0/RuleEngine.Benchmark.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/benchmark/RuleEngine.Benchmark",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\\\bNow listening on:\\\\s+(https?://\\\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",
