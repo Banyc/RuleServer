@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using RuleEngine.Benchmark.Models;
 using RuleEngine.Models.RuleEngine;
@@ -31,7 +32,7 @@ namespace RuleEngine.Benchmark
     [XmlExporterAttribute.FullCompressed]
     public class GeneralBenchmarks
     {
-        [Params(10, 100, 1000, 5000, 7500, 10000, 20000)]
+        [Params(10, 100, 300, 500, 1000, 5000, 7500, 10000, 20000)]
         public int RuleCount { get; set; }
         // [Params(10, 100, 1000, 10000)]
         [Params(10000)]
@@ -131,6 +132,19 @@ namespace RuleEngine.Benchmark
             {
                 this.testCase.Engine.Match("default", this.testCase.Input, (_, _) => this.MatchCount++, (_, _) => this.ExceptionCount++);
             }
+        }
+
+        [Benchmark]
+        public void DoMatchParallel()
+        {
+            List<Task> tasks = new();
+            int i;
+            for (i = 0; i < this.testCase.InputCount; i++)
+            {
+                Task task = Task.Run(() => this.testCase.Engine.Match("default", this.testCase.Input, (_, _) => this.MatchCount++, (_, _) => this.ExceptionCount++));
+                tasks.Add(task);
+            }
+            Task.WhenAll(tasks).Wait();
         }
 
         [GlobalCleanup]
