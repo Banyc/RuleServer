@@ -12,7 +12,7 @@ namespace RuleEngine.Models.RuleEngine
         public new List<RuleSettingsCompiled> RuleSet { get; set; }
         public Dictionary<string, RuleIndex> IndexByParameterName { get; set; } = new();
         // public new HashSet<string> IndexedParameters { get; set; }
-        public LruDictionary<List<object>, IEnumerable<RuleSettingsCompiled>> CachedIndex { get; set; }
+        public ConcurrentLimitedSizeDictionary<List<object>, IEnumerable<RuleSettingsCompiled>> CachedIndex { get; set; }
         public new int MaxIndexCacheSize { get => base.MaxIndexCacheSize; }
 
         public RuleGroupCompiled()
@@ -101,14 +101,8 @@ namespace RuleEngine.Models.RuleEngine
             IDictionary<string, object> symbolTable)
         {
             List<object> indexedArguments = GetIndexedArguments(symbolTable);
-            if (this.CachedIndex.ContainsKey(indexedArguments))
-            {
-                return this.CachedIndex[indexedArguments];
-            }
-            else
-            {
-                return null;
-            }
+            this.CachedIndex.TryGetValue(indexedArguments, out IEnumerable<RuleSettingsCompiled> value);
+            return value;
         }
 
         public void SetRulesToCachedIndex(
