@@ -1,7 +1,7 @@
 grammar RuleCondition;
 
 start
-    : expr
+    : expr EOF
     ;
 
 expr
