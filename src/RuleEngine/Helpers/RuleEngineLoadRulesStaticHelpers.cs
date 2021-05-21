@@ -1,13 +1,27 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using RuleEngine.Exceptions;
 using RuleEngine.Helpers.ExpressionParser;
 using RuleEngine.Models.Expression;
 using RuleEngine.Models.RuleEngine;
 
 namespace RuleEngine.Helpers
 {
+    public class ParseErrorHandler : IAntlrErrorListener<IToken>
+    {
+        public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
+        {
+            throw new ParseErrorException(msg)
+            {
+                Line = line,
+                CharPositionInLine = charPositionInLine,
+            };
+        }
+    }
+
     public static class RuleEngineLoadRulesStaticHelpers
     {
         public static RuleSettingsCompiled ParseRule(RuleSettings rule)
@@ -19,6 +33,8 @@ namespace RuleEngine.Helpers
             {
                 BuildParseTree = true
             };
+            parser.RemoveErrorListeners();
+            parser.AddErrorListener(new ParseErrorHandler());
             IParseTree tree = parser.start();
 
             RuleConditionVisitor visitor = new();

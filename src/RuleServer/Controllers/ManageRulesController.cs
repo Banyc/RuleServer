@@ -4,6 +4,7 @@ using System.Text.Unicode;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using RuleEngine.Exceptions;
 using RuleEngine.Models.RuleEngine;
 using RuleServer.Services;
 
@@ -28,7 +29,14 @@ namespace src.RuleServer.Controllers
         [HttpPut("UpdateSettings")]
         public async Task<IActionResult> UpdateSettings(RuleEngineSettings settings)
         {
-            this.ruleService.RuleEngineSettings = settings;
+            try
+            {
+                this.ruleService.RuleEngineSettings = settings;
+            }
+            catch(RuleEngineParseException ex)
+            {
+                return Ok(ex.Details);
+            }
             const string persistencePath = "appsettings.local.ruleEngine.json";
             System.IO.File.Delete(persistencePath);
             using FileStream jsonFileStream = System.IO.File.OpenWrite(persistencePath);

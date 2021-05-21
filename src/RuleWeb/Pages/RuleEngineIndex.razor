@@ -398,12 +398,30 @@
 
         if (res.IsSuccessStatusCode)
         {
-            await NotificationService.Open(new()
+            RuleGroupsParseErrorArgs args = null;
+            if (res.Content.Headers.ContentLength > 0)
             {
-                Message = "Push Succeeded",
-                Description = "Succeeded",
-                NotificationType = NotificationType.Success,
-            });
+                args = await res.Content.ReadFromJsonAsync<RuleGroupsParseErrorArgs>();
+            }
+            if (args == null)
+            {
+                await NotificationService.Open(new()
+                {
+                    Message = "Push Succeeded",
+                    Description = "Succeeded",
+                    NotificationType = NotificationType.Success,
+                });
+            }
+            else
+            {
+                await NotificationService.Error(new()
+                {
+                    Message = "Push Failed",
+                    Description = args.ToString(),
+                    Duration = 0,
+                    NotificationType = NotificationType.Error,
+                });
+            }
             StateHasChanged();
         }
         else

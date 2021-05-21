@@ -26,8 +26,9 @@ namespace RuleServer.Services
         {
             get => ruleEngineSettings; set
             {
-                this.ruleEngineSettings = value;
+                // this line must run first to trigger potential exceptions
                 _ruleEngine.UpdateSettings(value);
+                this.ruleEngineSettings = value;
             }
         }
 
