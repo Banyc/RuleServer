@@ -10,6 +10,7 @@ namespace RuleEngine.Models.RuleEngine
     {
         public HashSet<ISimpleExpression> DuplicatedSubtrees { get; set; }
         public new List<RuleSettingsCompiled> RuleSet { get; set; }
+        // `ParameterName` is also the field name
         public Dictionary<string, RuleIndex> IndexByParameterName { get; set; } = new();
         // public new HashSet<string> IndexedParameters { get; set; }
         public ConcurrentLimitedSizeDictionary<List<object>, IEnumerable<RuleSettingsCompiled>> CachedIndex { get; set; }
