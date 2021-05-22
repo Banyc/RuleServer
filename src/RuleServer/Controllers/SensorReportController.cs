@@ -36,10 +36,17 @@ namespace RuleServer.Controllers
         }
 
         [HttpPost("PostDatabase")]
-        public IActionResult PostDatabase(IDictionary<string, object> reportModel)
+        public IActionResult PostDatabase(IDictionary<string, object> reportModel, string targetGroupName = "default")
         {
             _logger.LogDebug("Incoming PostDatabase.");
-            _ruleService.Match("default", reportModel, this.databaseLogService.LogAlert, null);
+            try
+            {
+                _ruleService.Match(targetGroupName, reportModel, this.databaseLogService.LogAlert, null);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
             return Ok();
         }
         struct ExceptionStructure
@@ -49,20 +56,27 @@ namespace RuleServer.Controllers
         }
 
         [HttpPost("Post")]
-        public IActionResult Post(IDictionary<string, object> reportModel)
+        public IActionResult Post(IDictionary<string, object> reportModel, string targetGroupName = "default")
         {
             _logger.LogDebug("Incoming POST.");
             List<RuleSettings> matchedRules = new();
             List<ExceptionStructure> exceptions = new();
-            _ruleService.Match("default", reportModel,
-                (RuleEngine.RuleEngine sender, MatchedActionArgs args) =>
-                {
-                    matchedRules.Add(args.Rule);
-                },
-                (RuleEngine.RuleEngine sender, ExceptionActionArgs args) =>
-                {
-                    exceptions.Add(new ExceptionStructure { Exception = args.Exception.Message, Rule = args.Rule });
-                });
+            try
+            {
+                _ruleService.Match(targetGroupName, reportModel,
+                    (RuleEngine.RuleEngine sender, MatchedActionArgs args) =>
+                    {
+                        matchedRules.Add(args.Rule);
+                    },
+                    (RuleEngine.RuleEngine sender, ExceptionActionArgs args) =>
+                    {
+                        exceptions.Add(new ExceptionStructure { Exception = args.Exception.Message, Rule = args.Rule });
+                    });
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
             return Ok(new { Matched = matchedRules, Exceptions = exceptions });
         }
     }
