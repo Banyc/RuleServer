@@ -1,5 +1,11 @@
 # Rule Server
 
+## Projects
+
+-   `RuleWeb` - visual rule editor
+-   `RuleEngine` - core engine
+-   `RuleServer` - service wrapper containing `RuleEngine`
+
 ## Index
 
 The index is a system to lookup qualified rules promptly with the given keys. The keys are the values of a given field. The given field is specified by users.
