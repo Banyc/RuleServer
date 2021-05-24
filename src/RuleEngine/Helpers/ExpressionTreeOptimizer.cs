@@ -6,10 +6,10 @@ namespace RuleEngine.Helpers
     public static class ExpressionTreeOptimizer
     {
         #region optimize expression trees
-        private class SubtreeCounter
+        private class SubtreeInfo
         {
             public int Count { get; set; } = 0;
-            public ISimpleExpression Node { get; set; }
+            public ISimpleExpression Root { get; set; }
         }
 
         // return duplicated subtrees
@@ -19,6 +19,7 @@ namespace RuleEngine.Helpers
             Dictionary<ISimpleExpression, ISimpleExpression> replacements;
 
             #region subtreeIds
+            // {node, subtreeId of children} -> subtreeId of the node
             Dictionary<(ISimpleExpression, List<int>), int> subtreeIds;
             int GetSubtreeIdFromTree(ISimpleExpression node, List<int> childIds)
             {
@@ -31,23 +32,24 @@ namespace RuleEngine.Helpers
             }
             #endregion
             #region counter
-            Dictionary<int, SubtreeCounter> subtreeCounters;
+            // subtreeId -> subtree info
+            Dictionary<int, SubtreeInfo> subtreeInfos;
             // only save the node when it is the first count
-            SubtreeCounter GetSubtreeCounter(int subtreeId, ISimpleExpression node)
+            SubtreeInfo GetSubtreeInfo(int subtreeId, ISimpleExpression node)
             {
-                if (!subtreeCounters.ContainsKey(subtreeId))
+                if (!subtreeInfos.ContainsKey(subtreeId))
                 {
-                    subtreeCounters[subtreeId] = new()
+                    subtreeInfos[subtreeId] = new()
                     {
                         Count = 0,
-                        Node = node
+                        Root = node
                     };
                 }
-                return subtreeCounters[subtreeId];
+                return subtreeInfos[subtreeId];
             }
             #endregion
             // recursion
-            int GetSubtreeIdFromNodeAndCount(ISimpleExpression node)
+            int ReplaceDuplicatedSubtressRecursiveImpl(ISimpleExpression node)
             {
                 if (node == null)
                 {
@@ -56,8 +58,8 @@ namespace RuleEngine.Helpers
                 List<int> childIds = new();
                 if (node is SimpleExpressionBinary binaryNode)
                 {
-                    childIds.Add(GetSubtreeIdFromNodeAndCount(binaryNode.LeftOperand));
-                    childIds.Add(GetSubtreeIdFromNodeAndCount(binaryNode.RightOperand));
+                    childIds.Add(ReplaceDuplicatedSubtressRecursiveImpl(binaryNode.LeftOperand));
+                    childIds.Add(ReplaceDuplicatedSubtressRecursiveImpl(binaryNode.RightOperand));
 
                     // replace children
                     if (replacements.ContainsKey(binaryNode.LeftOperand))
@@ -71,7 +73,7 @@ namespace RuleEngine.Helpers
                 }
                 else if (node is SimpleExpressionUnary unaryNode)
                 {
-                    childIds.Add(GetSubtreeIdFromNodeAndCount(unaryNode.Operand));
+                    childIds.Add(ReplaceDuplicatedSubtressRecursiveImpl(unaryNode.Operand));
 
                     // replace child
                     if (replacements.ContainsKey(unaryNode.Operand))
@@ -82,18 +84,18 @@ namespace RuleEngine.Helpers
                 int subtreeId = GetSubtreeIdFromTree(node, childIds);
 
                 // count
-                SubtreeCounter counter = GetSubtreeCounter(subtreeId, node);
-                counter.Count++;
+                SubtreeInfo subtreeInfo = GetSubtreeInfo(subtreeId, node);
+                subtreeInfo.Count++;
 
                 // `node` is marked as it is about to be replaced
-                if (counter.Count > 1)
+                if (subtreeInfo.Count > 1)
                 {
-                    replacements[node] = counter.Node;
+                    replacements[node] = subtreeInfo.Root;
                     // mark the original node as duplicated
-                    if (counter.Node is SimpleExpressionBinary ||
-                        counter.Node is SimpleExpressionUnary)
+                    if (subtreeInfo.Root is SimpleExpressionBinary ||
+                        subtreeInfo.Root is SimpleExpressionUnary)
                     {
-                        duplicatedSubtrees.Add(counter.Node);
+                        duplicatedSubtrees.Add(subtreeInfo.Root);
                     }
                 }
 
@@ -101,7 +103,7 @@ namespace RuleEngine.Helpers
             }
 
             // initiate
-            subtreeCounters = new();
+            subtreeInfos = new();
             SimpleExpressionNodeEqualityComparer nodeEqualityComparer = new();
             SimpleExpressionSubtreeEqualityComparer subtreeEqualityComparer = new(nodeEqualityComparer);
             subtreeIds = new(subtreeEqualityComparer);
@@ -113,7 +115,7 @@ namespace RuleEngine.Helpers
             for (i = 0; i < roots.Count; i++)
             {
                 ISimpleExpression root = roots[i];
-                GetSubtreeIdFromNodeAndCount(root);
+                ReplaceDuplicatedSubtressRecursiveImpl(root);
 
                 // replace root
                 if (replacements.ContainsKey(root))
