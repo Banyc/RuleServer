@@ -51,11 +51,11 @@ namespace RuleEngine.Helpers
             RuleGroupCompiled ruleGroup,
             RuleSettingsCompiled rule)
         {
+            HashSet<string> visitedIndexedParameters = new();
             if (minTerm is SimpleExpressionParataxis childUnderOrParataxis &&
                 childUnderOrParataxis.Operator == SimpleExpressionBinaryOperator.And)
             {
                 // children of `minTerm` are under `and` operator
-                HashSet<string> visitedIndexedParameters = new();
                 foreach (var childUnderAnd in childUnderOrParataxis.Operands)
                 {
                     string visitedIndexedParameter =
@@ -66,13 +66,10 @@ namespace RuleEngine.Helpers
                         visitedIndexedParameters.Add(visitedIndexedParameter);
                     }
                 }
-                // index this rule if whether to index by a parameter is uncertain
-                UpdateUncertainIndex(visitedIndexedParameters, ruleGroup, rule);
             }
             else
             {
                 // `minTerm` is not `and` node
-                HashSet<string> visitedIndexedParameters = new();
 
                 string visitedIndexedParameter =
                     UpdateIndexUnderAnd(minTerm, ruleGroup, rule);
@@ -81,9 +78,9 @@ namespace RuleEngine.Helpers
                 {
                     visitedIndexedParameters.Add(visitedIndexedParameter);
                 }
-
-                UpdateUncertainIndex(visitedIndexedParameters, ruleGroup, rule);
             }
+            // index this rule if whether to index by a parameter is uncertain
+            UpdateUncertainIndex(visitedIndexedParameters, ruleGroup, rule);
         }
 
         // return visitedIndexedParameter
@@ -122,7 +119,7 @@ namespace RuleEngine.Helpers
                     {
                         // index this rule
                         visitedIndexedParameter = parameterName;
-                        ruleGroup.IndexByParameterName[parameterName].AddToIndexByValue(targetValue, rule);
+                        ruleGroup.IndexByParameterName[parameterName].CreateOrAddToIndexByValue(targetValue, rule);
                     }
                 }
             }
@@ -141,12 +138,11 @@ namespace RuleEngine.Helpers
             }
         }
 
-        // TODO
         public static void UpdateIndex(RuleGroupCompiled ruleGroup)
         {
             if (ruleGroup.IndexedParameters == null)
             {
-                // user does not define which parameter to index.
+                // the user did not define which parameter to index.
                 return;
             }
 
@@ -221,6 +217,5 @@ namespace RuleEngine.Helpers
             }
             return duplicatedSubtress;
         }
-
     }
 }

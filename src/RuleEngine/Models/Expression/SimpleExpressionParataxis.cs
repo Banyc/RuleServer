@@ -70,6 +70,7 @@ namespace RuleEngine.Models.Expression
         }
 
         // no min-term optimization
+        // add an operand under this operator
         private void AddChild(ISimpleExpression child)
         {
             if (child == null)

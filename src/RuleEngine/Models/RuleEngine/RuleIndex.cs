@@ -7,6 +7,7 @@ namespace RuleEngine.Models.RuleEngine
         // key: argument
         // value: relative rules
         public Dictionary<object, HashSet<RuleSettingsCompiled>> IndexByValue { get; set; } = new();
+        // the rules that each exists one minterm that does not contain the equality relation between variable `ParameterName` and a constant value.
         public HashSet<RuleSettingsCompiled> UncertainRules { get; set; } = new();
 
         public void AddToUncertainRules(RuleSettingsCompiled rule)
@@ -21,7 +22,7 @@ namespace RuleEngine.Models.RuleEngine
             this.UncertainRules.Add(rule);
         }
 
-        public void AddToIndexByValue(object value, RuleSettingsCompiled rule)
+        public void CreateOrAddToIndexByValue(object value, RuleSettingsCompiled rule)
         {
             if (this.UncertainRules.Contains(rule))
             {
