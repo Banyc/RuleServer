@@ -9,13 +9,22 @@ namespace RuleEngine.Helpers
     public class DirectMappedCache<TKey, TValue> : IDisposable
     {
         private KeyValuePair<TKey, TValue>[] rows;
-        private readonly ReaderWriterLockSlim readerWriterLock = new();
+        private readonly ReaderWriterLockSlim[] readerWriterLocks;
         private readonly IEqualityComparer<TKey> equalityComparer;
 
 #region public methods
         public DirectMappedCache(int rowSize, IEqualityComparer<TKey> equalityComparer = null)
         {
+            if (rowSize == 0)
+            {
+                throw new Exception("rowSize cannot be 0");
+            }
             this.rows = new KeyValuePair<TKey, TValue>[rowSize];
+            this.readerWriterLocks = new ReaderWriterLockSlim[rowSize];
+            for (int i = 0; i < rowSize; i++)
+            {
+                this.readerWriterLocks[i] = new();
+            }
             this.equalityComparer = equalityComparer ?? EqualityComparer<TKey>.Default;
         }
 
@@ -36,26 +45,32 @@ namespace RuleEngine.Helpers
             set
             {
                 int rowIndex = GetIndex(key);
-                this.readerWriterLock.EnterWriteLock();
+                this.readerWriterLocks[rowIndex].EnterWriteLock();
                 this.rows[rowIndex] = new(key, value);
-                this.readerWriterLock.ExitWriteLock();
+                this.readerWriterLocks[rowIndex].ExitWriteLock();
             }
         }
 
         public void Clear()
         {
-            this.readerWriterLock.EnterWriteLock();
+            for (int i = 0; i < this.rows.Length; i++)
+            {
+                this.readerWriterLocks[i].EnterWriteLock();
+            }
             this.rows = new KeyValuePair<TKey, TValue>[this.rows.Length];
-            this.readerWriterLock.ExitWriteLock();
+            for (int i = 0; i < this.rows.Length; i++)
+            {
+                this.readerWriterLocks[i].ExitWriteLock();
+            }
         }
 
         public bool ContainsKey(TKey key)
         {
             bool result;
             int rowIndex = GetIndex(key);
-            this.readerWriterLock.EnterReadLock();
+            this.readerWriterLocks[rowIndex].EnterReadLock();
             result = ContainsKeyThreadUnsafe(key, rowIndex);
-            this.readerWriterLock.ExitReadLock();
+            this.readerWriterLocks[rowIndex].ExitReadLock();
             return result;
         }
 
@@ -63,7 +78,7 @@ namespace RuleEngine.Helpers
         {
             bool isFound;
             int rowIndex = GetIndex(key);
-            this.readerWriterLock.EnterReadLock();
+            this.readerWriterLocks[rowIndex].EnterReadLock();
             if (ContainsKeyThreadUnsafe(key, rowIndex))
             {
                 isFound = true;
@@ -74,13 +89,16 @@ namespace RuleEngine.Helpers
                 isFound = false;
                 value = default;
             }
-            this.readerWriterLock.ExitReadLock();
+            this.readerWriterLocks[rowIndex].ExitReadLock();
             return isFound;
         }
 
         public void Dispose()
         {
-            this.readerWriterLock.Dispose();
+            for (int i = 0; i < this.rows.Length; i++)
+            {
+                this.readerWriterLocks[i].Dispose();
+            }
         }
 #endregion // public methods
 

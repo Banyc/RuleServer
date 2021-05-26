@@ -58,5 +58,33 @@ namespace RuleEngine.Tests
             Task.WhenAll(tasks).Wait();
             cache.Dispose();
         }
+
+        [Fact]
+        public void ParallelTests_2()
+        {
+            DirectMappedCache<int, int> cache = new(11);
+            const int parallelSize = 10000;
+            List<Task> tasks = new();
+            for (int i = 0; i < parallelSize; i++)
+            {
+                int key = i;
+                Task task = Task.Run(() =>
+                {
+                    cache[key] = key;
+                    var isFound = cache.TryGetValue(key, out var value);
+                    if (isFound)
+                    {
+                        Assert.Equal(key, value);
+                    }
+                    else
+                    {
+                        Assert.Equal(default, value);
+                    }
+                });
+                tasks.Add(task);
+            }
+            Task.WhenAll(tasks).Wait();
+            cache.Dispose();
+        }
     }
 }
