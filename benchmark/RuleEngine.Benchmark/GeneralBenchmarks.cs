@@ -150,6 +150,7 @@ namespace RuleEngine.Benchmark
         [GlobalCleanup]
         public void Cleanup()
         {
+            this.testCase.Engine.Dispose();
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }

@@ -10,7 +10,7 @@ using RuleEngine.Models.RuleEngine;
 namespace RuleEngine
 {
     // singleton
-    public partial class RuleEngine
+    public partial class RuleEngine : IDisposable
     {
         public string ServerName { get => _settings.ServerName; }
         private Dictionary<string, RuleGroupCompiled> _ruleGroups;
@@ -44,6 +44,15 @@ namespace RuleEngine
             Match(_ruleGroups[groupName], symbolTable, matchingAction, exceptionAction);
         }
 
+        public void Dispose()
+        {
+            foreach (var group in _ruleGroups.Values)
+            {
+                group.CachedIndex.Dispose();
+            }
+        }
+
+        #region private methods
         private void Match(
             RuleGroupCompiled ruleGroup,
             IDictionary<string, object> symbolTable,
@@ -181,5 +190,6 @@ namespace RuleEngine
                 return expressionTree.GetValue(symbolTable);
             }
         }
+        #endregion
     }
 }

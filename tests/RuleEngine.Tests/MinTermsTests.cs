@@ -33,7 +33,7 @@ namespace RuleEngine.Tests
                 RuleGroups = new() { group }
             };
 
-            RuleEngine engine = new(engineSettings);
+            using RuleEngine engine = new(engineSettings);
             // engine.GetProperty<RuleEngine, Dictionary<string, RuleGroupCompiled>>("test");
             var ruleGroups = engine.GetField<RuleEngine, Dictionary<string, RuleGroupCompiled>>("_ruleGroups");
             RuleSettingsCompiled ruleCompiled = ruleGroups["default"].RuleSet[0];

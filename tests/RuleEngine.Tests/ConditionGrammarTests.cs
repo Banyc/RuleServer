@@ -31,7 +31,7 @@ namespace RuleEngine.Tests
 
             try
             {
-                RuleEngine engine = new(engineSettings);
+                using RuleEngine engine = new(engineSettings);
             }
             catch (RuleEngineParseException ex)
             {

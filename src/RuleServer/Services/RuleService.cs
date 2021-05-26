@@ -74,6 +74,7 @@ namespace RuleServer.Services
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            _ruleEngine.Dispose();
             return Task.CompletedTask;
         }
 
