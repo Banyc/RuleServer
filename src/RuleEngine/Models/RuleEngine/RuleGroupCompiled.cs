@@ -13,7 +13,7 @@ namespace RuleEngine.Models.RuleEngine
         // `ParameterName` is also the field name
         public Dictionary<string, RuleIndex> IndexByParameterName { get; set; } = new();
         // public new HashSet<string> IndexedParameters { get; set; }
-        public ConcurrentLimitedSizeDictionary<List<object>, IEnumerable<RuleSettingsCompiled>> CachedIndex { get; set; }
+        public DirectMappedCache<List<object>, IEnumerable<RuleSettingsCompiled>> CachedIndex { get; set; }
         public new int MaxIndexCacheSize { get => base.MaxIndexCacheSize; }
 
         public RuleGroupCompiled()
