@@ -60,7 +60,7 @@ namespace RuleServer.Services
                 // this settings source is considered as old one
                 this.ruleEngineSettings = _settingsMonitor.CurrentValue;
             }
-            _ruleEngine = new(_settingsMonitor.CurrentValue, _engineLogger);
+            _ruleEngine = new(this.ruleEngineSettings, _engineLogger);
 
             _settingsMonitor.OnChange((settings) => {
                 // don't load old settings when there are new settings
