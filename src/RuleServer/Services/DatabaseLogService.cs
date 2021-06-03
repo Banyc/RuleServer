@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,12 +28,12 @@ namespace RuleServer.Services
             var logDatabase = scope.ServiceProvider.GetService<RuleAlertContext>();
             await logDatabase.RuleAlerts.AddAsync(new()
             {
-                IsActive = true,
                 RuleDetail = args.Rule.ConditionExpression,
                 RuleName = args.Rule.RuleName,
-                Timestamp = (string)args.Arguments["timestamp"],
-                SensorId = (string)args.Arguments["sensorId"],
-                ServerName = sender.ServerName
+                DateTime = DateTime.Now,
+                Fact = System.Text.Json.JsonSerializer.Serialize(args.Arguments),
+                ServerName = sender.ServerName,
+                GroupName = args.Group.GroupName,
             }).ConfigureAwait(false);
             await logDatabase.SaveChangesAsync().ConfigureAwait(false);
             stopwatch.Stop();
