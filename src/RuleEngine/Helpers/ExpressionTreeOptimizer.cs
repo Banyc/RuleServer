@@ -25,7 +25,7 @@ namespace RuleEngine.Helpers
                 var tuple = (root, childTreeIds);
                 if (!treeIds.ContainsKey(tuple))
                 {
-                    treeIds[tuple] = treeIds.Count;
+                    treeIds[tuple] = treeIds.Count + 1;
                 }
                 return treeIds[tuple];
             }
