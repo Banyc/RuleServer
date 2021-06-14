@@ -13,14 +13,14 @@ namespace RuleServer.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class SensorReportController : ControllerBase
+    public class MatchRulesController : ControllerBase
     {
-        private readonly ILogger<SensorReportController> _logger;
+        private readonly ILogger<MatchRulesController> _logger;
         private readonly RuleService _ruleService;
         private readonly DatabaseLogService databaseLogService;
 
-        public SensorReportController(
-            ILogger<SensorReportController> logger,
+        public MatchRulesController(
+            ILogger<MatchRulesController> logger,
             RuleService ruleService,
             DatabaseLogService databaseLogService)
         {
